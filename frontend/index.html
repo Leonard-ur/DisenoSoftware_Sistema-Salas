@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Asignación de Salas</title>
+  <style>
+    /* ── Reset básico ────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Cabecera ────────────────────────────────────────────── */
+    header {
+      background: #2b6cb0;
+      color: #fff;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    header h1 { font-size: 1.6rem; }
+    header p  { font-size: .9rem; opacity: .85; margin-top: .25rem; }
+
+    /* ── Contenido principal ─────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2.5rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.1);
+      padding: 2rem 2.5rem;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: #2b6cb0;
+      border-bottom: 2px solid #ebf4ff;
+      padding-bottom: .6rem;
+    }
+
+    /* ── Formulario ──────────────────────────────────────────── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      margin-bottom: 1.1rem;
+    }
+
+    label { font-size: .875rem; font-weight: 600; }
+
+    input, select {
+      padding: .55rem .8rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: .95rem;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #2b6cb0;
+      box-shadow: 0 0 0 3px rgba(43,108,176,.15);
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: .75rem;
+      background: #2b6cb0;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: .5rem;
+      transition: background .2s;
+    }
+    button[type="submit"]:hover { background: #2c5282; }
+    button[type="submit"]:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    /* ── Resultados ──────────────────────────────────────────── */
+    #resultado {
+      margin-top: 1.5rem;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      display: none;
+    }
+    #resultado.exito  { background: #f0fff4; border: 1px solid #68d391; color: #276749; }
+    #resultado.error  { background: #fff5f5; border: 1px solid #fc8181; color: #742a2a; }
+
+    /* ── Pie de página ───────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: .78rem;
+      color: #718096;
+      background: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏛️ Sistema de Asignación de Salas Universitario</h1>
+    <p>Plataforma de Logística Educativa – Prototipo Clean Architecture</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>📋 Nueva Solicitud de Sala</h2>
+
+      <form id="formSolicitud">
+
+        <div class="form-group">
+          <label for="solicitante">Docente / Área solicitante</label>
+          <input type="text" id="solicitante" name="solicitante"
+                 placeholder="Ej: Prof. García – Depto. Ingeniería" required />
+        </div>
+
+        <div class="form-group">
+          <label for="alumnos">Número de alumnos inscritos</label>
+          <input type="number" id="alumnos" name="alumnos"
+                 min="1" max="500" placeholder="Ej: 45" required />
+        </div>
+
+        <div class="form-group">
+          <label for="inicio">Fecha y hora de inicio</label>
+          <input type="datetime-local" id="inicio" name="inicio" required />
+        </div>
+
+        <div class="form-group">
+          <label for="fin">Fecha y hora de término</label>
+          <input type="datetime-local" id="fin" name="fin" required />
+        </div>
+
+        <div class="form-group">
+          <label for="equipamiento">Equipamiento requerido</label>
+          <select id="equipamiento" name="equipamiento" multiple
+                  style="height:6rem">
+            <option value="proyector">Proyector</option>
+            <option value="aire_acondicionado">Aire acondicionado</option>
+            <option value="computadoras">Computadoras</option>
+            <option value="microfono">Micrófono</option>
+            <option value="videoconferencia">Videoconferencia</option>
+          </select>
+          <small style="color:#718096">Mantén Ctrl/Cmd para seleccionar varios</small>
+        </div>
+
+        <button type="submit" id="btnEnviar">🔍 Buscar sala disponible</button>
+      </form>
+
+      <div id="resultado"></div>
+    </div>
+  </main>
+
+  <footer>
+    Sistema de Asignación de Salas &copy; 2025 – Arquitectura Limpia (Python)
+  </footer>
+
+  <script>
+    const form      = document.getElementById('formSolicitud');
+    const resultado = document.getElementById('resultado');
+    const btn       = document.getElementById('btnEnviar');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultado.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = '⏳ Buscando…';
+
+      // Recoger equipamiento (selección múltiple)
+      const equipSelect = document.getElementById('equipamiento');
+      const equipamiento = Array.from(equipSelect.selectedOptions).map(o => o.value);
+
+      const payload = {
+        solicitante:            document.getElementById('solicitante').value.trim(),
+        alumnos_inscritos:      parseInt(document.getElementById('alumnos').value, 10),
+        inicio:                 document.getElementById('inicio').value,
+        fin:                    document.getElementById('fin').value,
+        equipamiento_requerido: equipamiento,
+      };
+
+      try {
+        const resp = await fetch('/api/asignar', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload),
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok) {
+          resultado.className = 'exito';
+          resultado.innerHTML =
+            `<strong>✅ Sala asignada exitosamente</strong><br><br>
+             <b>Sala:</b> ${data.sala_nombre} (${data.sala_id})<br>
+             <b>Capacidad:</b> ${data.capacidad} personas<br>
+             <b>Equipamiento:</b> ${data.equipamiento.join(', ') || 'Ninguno'}<br>
+             <b>Solicitud ID:</b> ${data.solicitud_id}`;
+        } else {
+          resultado.className = 'error';
+          resultado.innerHTML =
+            `<strong>❌ Sin sala disponible</strong><br>${data.error}`;
+        }
+      } catch (err) {
+        resultado.className = 'error';
+        resultado.innerHTML = `<strong>❌ Error de conexión</strong><br>${err.message}`;
+      } finally {
+        resultado.style.display = 'block';
+        btn.disabled    = false;
+        btn.textContent = '🔍 Buscar sala disponible';
+      }
+    });
+  </script>
+
+</body>
+</html>
