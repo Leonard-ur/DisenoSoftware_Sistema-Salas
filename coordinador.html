@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Coordinador | UCT - Asignación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-[#0A2540] text-white flex flex-col hidden md:flex">
+        <div class="p-6 flex items-center justify-center border-b border-blue-800">
+            <div class="text-2xl font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-building-columns text-yellow-500"></i>
+                UCT<span class="text-sm font-normal text-gray-300">Coord</span>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-chart-pie w-5"></i> Panel General
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 bg-blue-800 rounded-lg text-white font-medium transition-colors">
+                <i class="fa-solid fa-list-check w-5"></i> Solicitudes Pendientes
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-map-location-dot w-5"></i> Mapa de Aulas
+            </a>
+        </nav>
+        <div class="p-4 border-t border-blue-800">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-red-400 transition-colors">
+                <i class="fa-solid fa-right-from-bracket w-5"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-semibold text-gray-800">Administración de Solicitudes</h1>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 border-l pl-6">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-semibold text-gray-800">Marta Gómez</p>
+                        <p class="text-xs text-gray-500">Coordinación Académica</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 font-bold border-2 border-blue-900">
+                        MG
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8">
+            <div class="mb-8 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Solicitudes Pendientes</h2>
+                    <p class="text-gray-600 mt-1">Revise y asigne salas a los requerimientos de los docentes.</p>
+                </div>
+                <span class="bg-yellow-100 text-yellow-800 text-sm font-bold px-3 py-1 rounded-full border border-yellow-200">
+                    1 Pendientes
+                </span>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Docente</th>
+                                <th class="p-4 font-semibold">Curso / Aforo</th>
+                                <th class="p-4 font-semibold">Horario</th>
+                                <th class="p-4 font-semibold text-center">Accesibilidad</th>
+                                <th class="p-4 font-semibold text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800" id="tablaSolicitudes">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 text-sm font-medium text-gray-500">#REQ-089</td>
+                                <td class="p-4">
+                                    <p class="font-semibold">Dr. Roberto Silva</p>
+                                </td>
+                                <td class="p-4">
+                                    <p class="font-medium text-[#0A2540]">Arquitectura de Software</p>
+                                    <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-users mr-1"></i> 45 est.</p>
+                                </td>
+                                <td class="p-4">
+                                    <span class="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded border border-blue-100 font-medium">14:30 - 16:00</span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="text-green-600" title="Requerida"><i class="fa-solid fa-wheelchair"></i></span>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <button class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2 ml-auto">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Sugerir Sala
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
