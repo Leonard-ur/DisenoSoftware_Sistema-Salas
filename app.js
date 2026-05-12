@@ -1,7 +1,50 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    // ==========================================
+    // LÓGICA DE NAVEGACIÓN (SIMULACIÓN SPA)
+    // ==========================================
+    const navLinks = document.querySelectorAll('.nav-link');
+    const viewSections = document.querySelectorAll('.view-section');
+    const headerTitle = document.getElementById('header-title');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // 1. Quitar estilos activos de todos los links
+            navLinks.forEach(l => {
+                l.classList.remove('bg-blue-800', 'text-white', 'font-medium', 'active-link');
+                l.classList.add('text-gray-300');
+            });
+
+            // 2. Añadir estilo activo al link clickeado
+            link.classList.add('bg-blue-800', 'text-white', 'font-medium', 'active-link');
+            link.classList.remove('text-gray-300');
+
+            // 3. Ocultar todas las vistas
+            viewSections.forEach(view => {
+                view.classList.add('hidden');
+                view.classList.remove('block');
+            });
+
+            // 4. Mostrar la vista objetivo
+            const targetId = link.getAttribute('data-target');
+            const targetView = document.getElementById(targetId);
+            if (targetView) {
+                targetView.classList.remove('hidden');
+                targetView.classList.add('block');
+            }
+
+            // 5. Cambiar el título del Header (Opcional para que se vea más real)
+            if(headerTitle) {
+                headerTitle.innerText = link.innerText.trim();
+            }
+        });
+    });
+
     
     // ==========================================
-    // LÓGICA VISTA PROFESOR (SOLICITANTE)
+    // LÓGICA VISTA PROFESOR (FORMULARIO)
     // ==========================================
     const formulario = document.getElementById('formularioSala');
     const mensajeDiv = document.getElementById('mensajeResultado');
@@ -10,14 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if(formulario) {
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault(); 
-
-            // 1. Recopilar datos ('tipoEspacio' según el PDF)
             const formData = new FormData(formulario);
             const datosSolicitud = {
                 curso: formData.get('curso'),
                 aforo: parseInt(formData.get('aforo')),
                 horario: formData.get('horario'),
-                tipoEspacio: formData.get('tipoEspacio'), // Nuevo campo
+                tipoEspacio: formData.get('tipoEspacio'),
                 accesibilidad: formData.get('accesibilidad') === 'on' 
             };
 
@@ -27,14 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
             btnEnviar.classList.add('opacity-70');
 
             try {
-                // Mockup: Simula envío al backend (FastAPI)
                 await simularPeticionBackend(datosSolicitud);
-
-                mostrarMensaje('¡Solicitud enviada con éxito! El coordinador la revisará pronto.', 'success');
+                mostrarMensaje('¡Solicitud enviada con éxito!', 'success');
                 formulario.reset(); 
-
             } catch (error) {
-                mostrarMensaje('Hubo un error al enviar la solicitud. Intente nuevamente.', 'error');
+                mostrarMensaje('Hubo un error al enviar la solicitud.', 'error');
             } finally {
                 btnEnviar.innerHTML = textoOriginal;
                 btnEnviar.disabled = false;
@@ -44,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // LÓGICA VISTA COORDINADOR (RESOLUTOR)
+    // LÓGICA VISTA COORDINADOR (MOTOR DE REGLAS)
     // ==========================================
     const btnSugerir = document.querySelector('.btn-sugerir');
     const modal = document.getElementById('modalSugerencia');
@@ -55,37 +93,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnConfirmarAsignacion = document.getElementById('btnConfirmarAsignacion');
 
     if (btnSugerir) {
-        // Abrir modal y simular motor de reglas (FR-02)
         btnSugerir.addEventListener('click', () => {
             modal.classList.remove('hidden');
             resultadoMotor.classList.add('hidden');
             btnConfirmarAsignacion.classList.add('hidden');
             loaderMotor.classList.remove('hidden');
 
-            // Simular el tiempo de procesamiento del "Cruce Automático" en Python
             setTimeout(() => {
                 loaderMotor.classList.add('hidden');
                 resultadoMotor.classList.remove('hidden');
                 btnConfirmarAsignacion.classList.remove('hidden');
-            }, 2000); // 2 segundos de evaluación
+            }, 2000); 
         });
 
-        // Eventos para cerrar el modal
-        const cerrarModal = () => {
-            modal.classList.add('hidden');
-        };
-
+        const cerrarModal = () => modal.classList.add('hidden');
         btnCerrarX.addEventListener('click', cerrarModal);
         btnCancelarModal.addEventListener('click', cerrarModal);
 
-        // Evento para asignar (Confirmar)
         btnConfirmarAsignacion.addEventListener('click', () => {
             btnConfirmarAsignacion.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Asignando...';
-            
             setTimeout(() => {
                 cerrarModal();
-                alert("¡Sala asignada exitosamente! El sistema ha notificado al Dr. Roberto Silva.");
-                // En un proyecto real, aquí se recargaría la tabla eliminando la solicitud
+                alert("¡Sala asignada exitosamente!");
                 location.reload(); 
             }, 1000);
         });
@@ -96,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     function mostrarMensaje(texto, tipo) {
         mensajeDiv.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-        
         if(tipo === 'success') {
             mensajeDiv.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-200');
             mensajeDiv.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> ${texto}`;
@@ -104,17 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
             mensajeDiv.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-200');
             mensajeDiv.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-2"></i> ${texto}`;
         }
-        
         mensajeDiv.classList.remove('hidden');
         setTimeout(() => { mensajeDiv.classList.add('hidden'); }, 5000);
     }
 
     function simularPeticionBackend(datos) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                console.log("Datos recibidos en backend:", datos);
-                resolve({ status: 200, message: "OK" });
-            }, 1000);
-        });
+        return new Promise((resolve) => setTimeout(() => resolve({ status: 200 }), 1000));
     }
 });
