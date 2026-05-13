@@ -1,4 +1,8 @@
-from crear_db import SessionLocal, Sala, init_db
+import sys
+import os
+# Esto le dice a Python que la carpeta raíz del proyecto es la que está un nivel más arriba.
+# Así podrá encontrar las carpetas 'domain', 'use_cases', etc.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 salas = [
     {"codigo": "A-101", "capacidad": 20, "estado": "DISPONIBLE",  "proyector_ok": True,  "enchufes_usables": 0},
