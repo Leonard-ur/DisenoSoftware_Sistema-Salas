@@ -1,0 +1,23 @@
+# .gitignore
+
+# Ignorar archivos de base de datos SQLite
+*.db
+*.sqlite3
+backend/infrastructure/salas.db
+
+# Ignorar archivos temporales y caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignorar entornos virtuales (donde se instalan las librerías)
+venv/
+env/
+.venv/
+
+# Ignorar variables de entorno (contraseñas, claves secretas)
+.env
+
+# Ignorar archivos del sistema operativo (Mac/Windows)
+.DS_Store
+Thumbs.db
