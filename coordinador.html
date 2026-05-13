@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Coordinador | UCT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-[#0A2540] text-white flex flex-col hidden md:flex z-20">
+        <div class="p-6 flex items-center justify-center border-b border-blue-800">
+            <div class="text-2xl font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-building-columns text-yellow-500"></i>UCT<span class="text-sm font-normal text-gray-300">Coord</span>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2" id="nav-coordinador">
+            <a href="#" data-target="view-panel" class="nav-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-chart-pie w-5"></i> Panel General
+            </a>
+            <a href="#" data-target="view-pendientes" class="nav-link flex items-center gap-3 px-4 py-3 bg-blue-800 rounded-lg text-white font-medium transition-colors active-link">
+                <i class="fa-solid fa-list-check w-5"></i> Solicitudes Pendientes
+            </a>
+            <a href="#" data-target="view-mapa" class="nav-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-map-location-dot w-5"></i> Mapa de Aulas
+            </a>
+        </nav>
+        <div class="p-4 border-t border-blue-800">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-red-400 transition-colors">
+                <i class="fa-solid fa-right-from-bracket w-5"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-y-auto relative">
+        <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-semibold text-gray-800" id="header-title">Administración de Solicitudes</h1>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 border-l pl-6">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-semibold text-gray-800">Marta Gómez</p>
+                        <p class="text-xs text-gray-500">Coordinación Académica</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 font-bold border-2 border-blue-900">MG</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8 w-full max-w-6xl mx-auto">
+            
+            <!-- VISTA: PANEL GENERAL (DASHBOARD) -->
+            <div id="view-panel" class="view-section hidden space-y-6">
+                <h2 class="text-2xl font-bold text-gray-900">Panel de Control de Salas</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500"><p class="text-sm text-gray-500">Salas Totales</p><p class="text-3xl font-bold">120</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500"><p class="text-sm text-gray-500">Ocupación Actual</p><p class="text-3xl font-bold">85%</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500"><p class="text-sm text-gray-500">Solicitudes Pendientes</p><p class="text-3xl font-bold text-yellow-600">1</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500"><p class="text-sm text-gray-500">Salas en Mantención</p><p class="text-3xl font-bold text-red-600">3</p></div>
+                </div>
+            </div>
+
+            <!-- VISTA: SOLICITUDES PENDIENTES (ORIGINAL) -->
+            <div id="view-pendientes" class="view-section block">
+                <div class="mb-8 flex justify-between items-end">
+                    <div><h2 class="text-2xl font-bold text-gray-900">Solicitudes Pendientes</h2><p class="text-gray-600 mt-1">Revise y asigne salas a los requerimientos de los docentes.</p></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-gray-200 text-gray-600 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">ID</th><th class="p-4 font-semibold">Docente</th><th class="p-4 font-semibold">Curso / Aforo</th><th class="p-4 font-semibold">Horario</th><th class="p-4 font-semibold text-center">Accesibilidad</th><th class="p-4 font-semibold text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-800">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 text-sm font-medium text-gray-500">#REQ-089</td>
+                                <td class="p-4"><p class="font-semibold">Dr. Roberto Silva</p></td>
+                                <td class="p-4"><p class="font-medium text-[#0A2540]">Arquitectura de Software</p><p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-users mr-1"></i> 45 est.</p></td>
+                                <td class="p-4"><span class="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded border border-blue-100 font-medium">14:30 - 16:00</span></td>
+                                <td class="p-4 text-center"><span class="text-green-600" title="Requerida"><i class="fa-solid fa-wheelchair"></i></span></td>
+                                <td class="p-4 text-right"><button class="btn-sugerir bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2 ml-auto"><i class="fa-solid fa-wand-magic-sparkles"></i> Sugerir Sala</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISTA: MAPA DE AULAS (SIMULADO) -->
+            <div id="view-mapa" class="view-section hidden">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Mapa del Campus</h2>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                    <i class="fa-solid fa-map text-6xl text-gray-200 mb-4"></i>
+                    <p class="text-gray-500">El módulo de visualización de planos GIS se habilitará en la Fase 2 del proyecto.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+   <div id="modalSugerencia" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
+            <div class="bg-[#0A2540] p-4 text-white flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-microchip text-yellow-500"></i> Motor de Asignación Automática</h3>
+                <button id="btnCerrarX" class="text-gray-300 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="loaderMotor" class="text-center py-8 hidden">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-800 mb-4"></i>
+                    <p class="text-gray-600 font-medium">Evaluando reglas de negocio...</p>
+                </div>
+                <div id="resultadoMotor" class="hidden space-y-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-sm text-green-800 font-semibold mb-1">¡Sala óptima encontrada!</p>
+                        <h4 class="text-2xl font-bold text-green-900 flex items-center gap-2"><i class="fa-solid fa-door-open"></i> Sala E-204</h4>
+                    </div>
+                    <ul class="text-sm text-gray-600 space-y-2 border-t pt-3">
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Aforo:</strong> 50 cupos (Cumple aforo 95%)</li>
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Accesibilidad:</strong> 1er piso / Rampa habilitada</li>
+                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Disponibilidad:</strong> Sin traslapes</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 border-t flex justify-end gap-3">
+                <button id="btnCancelarModal" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors">Cancelar</button>
+                <button id="btnConfirmarAsignacion" class="hidden px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-check"></i> Asignar Sala
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
