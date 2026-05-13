@@ -1,5 +1,15 @@
 # backend/main.py
 
+import sys
+import os
+
+# ==========================================
+# FIX DE RUTAS (Evita errores de importación)
+# ==========================================
+# Esto le dice a Python que la carpeta "backend" es la raíz del proyecto.
+# Así, cuando digamos "from infrastructure...", Python sabrá dónde buscar.
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
