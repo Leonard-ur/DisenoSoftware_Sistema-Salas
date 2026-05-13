@@ -1,3 +1,9 @@
+import sys
+import os
+# Esto le dice a Python que la carpeta raíz del proyecto es la que está un nivel más arriba.
+# Así podrá encontrar las carpetas 'domain', 'use_cases', etc.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError

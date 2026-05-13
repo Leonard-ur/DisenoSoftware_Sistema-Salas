@@ -1,4 +1,11 @@
-from crear_db import SessionLocal, Sala, init_db
+import sys
+import os
+
+# 1. El truco del GPS para que Python mire desde la raíz del proyecto
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 2. Importamos usando la ruta absoluta (infrastructure.crear_db)
+from infrastructure.crear_db import SessionLocal, Sala, init_db
 
 salas = [
     {"codigo": "A-101", "capacidad": 20, "estado": "DISPONIBLE",  "proyector_ok": True,  "enchufes_usables": 0},
@@ -19,21 +26,21 @@ salas = [
 ]
  
 def seed():
-    #crea tablas y conexión
+    # crea tablas y conexión
     init_db()
     db = SessionLocal()
  
-    #intenta crear datos de salas
+    # intenta crear datos de salas
     try:
         for datos in salas:
             sala = Sala(**datos)
             db.add(sala)
 
-        #los añade y confirma que se hizo
+        # los añade y confirma que se hizo
         db.commit()
         print(f"{len(salas)} salas insertadas correctamente.\n")
  
-    #informa si hubo error y destruye los datos que se hayan hecho
+    # informa si hubo error y destruye los datos que se hayan hecho
     except Exception as e:
         db.rollback()
         print(f"Error: {e}")
