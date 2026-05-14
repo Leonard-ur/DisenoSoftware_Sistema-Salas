@@ -19,14 +19,14 @@
             </div>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2" id="nav-coordinador">
-            <a href="#" data-target="view-panel" class="nav-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
+            <a href="#" data-target="view-panel" class="nav-link flex items-center gap-3 px-4 py-3 bg-blue-800 rounded-lg text-white font-medium transition-colors active-link">
                 <i class="fa-solid fa-chart-pie w-5"></i> Panel General
             </a>
-            <a href="#" data-target="view-pendientes" class="nav-link flex items-center gap-3 px-4 py-3 bg-blue-800 rounded-lg text-white font-medium transition-colors active-link">
+            <a href="#" data-target="view-pendientes" class="nav-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
                 <i class="fa-solid fa-list-check w-5"></i> Solicitudes Pendientes
             </a>
             <a href="#" data-target="view-mapa" class="nav-link flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-blue-800 hover:text-white rounded-lg transition-colors">
-                <i class="fa-solid fa-map-location-dot w-5"></i> Mapa de Aulas
+                <i class="fa-solid fa-map-location-dot w-5"></i> Inventario de Aulas
             </a>
         </nav>
         <div class="p-4 border-t border-blue-800">
@@ -39,7 +39,7 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col overflow-y-auto relative">
         <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-            <h1 class="text-xl font-semibold text-gray-800" id="header-title">Administración de Solicitudes</h1>
+            <h1 class="text-xl font-semibold text-gray-800" id="header-title">Panel de Control de Salas</h1>
             <div class="flex items-center gap-6">
                 <div class="flex items-center gap-3 border-l pl-6">
                     <div class="text-right hidden sm:block">
@@ -52,20 +52,52 @@
         </header>
 
         <div class="p-8 w-full max-w-6xl mx-auto">
-            
-            <!-- VISTA: PANEL GENERAL (DASHBOARD) -->
-            <div id="view-panel" class="view-section hidden space-y-6">
+
+            <!-- VISTA: PANEL GENERAL (DASHBOARD) — datos reales via API -->
+            <div id="view-panel" class="view-section block space-y-6">
                 <h2 class="text-2xl font-bold text-gray-900">Panel de Control de Salas</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500"><p class="text-sm text-gray-500">Salas Totales</p><p class="text-3xl font-bold">120</p></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500"><p class="text-sm text-gray-500">Ocupación Actual</p><p class="text-3xl font-bold">85%</p></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500"><p class="text-sm text-gray-500">Solicitudes Pendientes</p><p class="text-3xl font-bold text-yellow-600">1</p></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500"><p class="text-sm text-gray-500">Salas en Mantención</p><p class="text-3xl font-bold text-red-600">3</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500">Salas Totales</p>
+                        <p class="text-3xl font-bold" id="stat-total">
+                            <i class="fa-solid fa-circle-notch fa-spin text-gray-300 text-2xl"></i>
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                        <p class="text-sm text-gray-500">Salas Disponibles</p>
+                        <p class="text-3xl font-bold text-green-600" id="stat-disponibles">
+                            <i class="fa-solid fa-circle-notch fa-spin text-gray-300 text-2xl"></i>
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                        <p class="text-sm text-gray-500">Asignaciones Activas</p>
+                        <p class="text-3xl font-bold text-yellow-600" id="stat-asignadas">
+                            <i class="fa-solid fa-circle-notch fa-spin text-gray-300 text-2xl"></i>
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
+                        <p class="text-sm text-gray-500">Salas en Mantención</p>
+                        <p class="text-3xl font-bold text-red-600" id="stat-mantenimiento">
+                            <i class="fa-solid fa-circle-notch fa-spin text-gray-300 text-2xl"></i>
+                        </p>
+                    </div>
+                </div>
+                <!-- Mini tabla de asignaciones recientes -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-check-double text-green-500"></i> Asignaciones Confirmadas
+                    </h3>
+                    <div id="tabla-asignaciones-panel">
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
+                            <p class="text-sm">Cargando asignaciones...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- VISTA: SOLICITUDES PENDIENTES (ORIGINAL) -->
-            <div id="view-pendientes" class="view-section block">
+            <!-- VISTA: SOLICITUDES PENDIENTES -->
+            <div id="view-pendientes" class="view-section hidden">
                 <div class="mb-8 flex justify-between items-end">
                     <div><h2 class="text-2xl font-bold text-gray-900">Solicitudes Pendientes</h2><p class="text-gray-600 mt-1">Revise y asigne salas a los requerimientos de los docentes.</p></div>
                 </div>
@@ -90,19 +122,36 @@
                 </div>
             </div>
 
-            <!-- VISTA: MAPA DE AULAS (SIMULADO) -->
-            <div id="view-mapa" class="view-section hidden">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Mapa del Campus</h2>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                    <i class="fa-solid fa-map text-6xl text-gray-200 mb-4"></i>
-                    <p class="text-gray-500">El módulo de visualización de planos GIS se habilitará en la Fase 2 del proyecto.</p>
+            <!-- VISTA: INVENTARIO DE AULAS — reemplaza el placeholder "Fase 2" -->
+            <div id="view-mapa" class="view-section hidden space-y-5">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Inventario de Aulas</h2>
+                        <p class="text-gray-500 text-sm mt-1">Estado actual de todas las salas del campus.</p>
+                    </div>
+                    <!-- Filtros -->
+                    <div class="flex gap-2 flex-wrap" id="filtros-sala">
+                        <button data-filtro="TODOS" class="filtro-btn active px-3 py-1.5 text-sm font-medium rounded-lg bg-[#0A2540] text-white transition-colors">Todas</button>
+                        <button data-filtro="DISPONIBLE" class="filtro-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-white border border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-700 transition-colors">Disponibles</button>
+                        <button data-filtro="ASIGNADA" class="filtro-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-white border border-gray-200 text-gray-600 hover:border-yellow-400 hover:text-yellow-700 transition-colors">Asignadas</button>
+                        <button data-filtro="MANTENIMIENTO" class="filtro-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-white border border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-700 transition-colors">Mantención</button>
+                    </div>
+                </div>
+
+                <div id="contenedor-salas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Las tarjetas se renderizan via JS -->
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
+                        <p>Cargando inventario...</p>
+                    </div>
                 </div>
             </div>
 
         </div>
     </main>
 
-   <div id="modalSugerencia" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity">
+    <!-- MODAL SUGERENCIA -->
+    <div id="modalSugerencia" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
             <div class="bg-[#0A2540] p-4 text-white flex justify-between items-center">
                 <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-microchip text-yellow-500"></i> Motor de Asignación Automática</h3>
@@ -113,17 +162,7 @@
                     <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-800 mb-4"></i>
                     <p class="text-gray-600 font-medium">Evaluando reglas de negocio...</p>
                 </div>
-                <div id="resultadoMotor" class="hidden space-y-4">
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p class="text-sm text-green-800 font-semibold mb-1">¡Sala óptima encontrada!</p>
-                        <h4 class="text-2xl font-bold text-green-900 flex items-center gap-2"><i class="fa-solid fa-door-open"></i> Sala E-204</h4>
-                    </div>
-                    <ul class="text-sm text-gray-600 space-y-2 border-t pt-3">
-                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Aforo:</strong> 50 cupos (Cumple aforo 95%)</li>
-                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Accesibilidad:</strong> 1er piso / Rampa habilitada</li>
-                        <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Disponibilidad:</strong> Sin traslapes</li>
-                    </ul>
-                </div>
+                <div id="resultadoMotor" class="hidden space-y-4"></div>
             </div>
             <div class="bg-gray-50 px-6 py-4 border-t flex justify-end gap-3">
                 <button id="btnCancelarModal" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors">Cancelar</button>
