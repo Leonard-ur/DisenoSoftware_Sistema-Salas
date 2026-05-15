@@ -35,6 +35,11 @@ class IAsignacionRepository(ABC):
     def obtener_todas_las_asignaciones(self) -> List[Asignacion]:
         pass
 
+    @abstractmethod
+    def obtener_asignaciones_detalladas(self) -> List[dict]:
+        """Retorna un Read Model (DTO) con los datos cruzados para la vista del usuario"""
+        pass
+
 
 class IUsuarioRepository(ABC):
     """Puerto de salida para gestionar usuarios"""

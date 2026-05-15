@@ -51,11 +51,11 @@ class AsignacionUseCase:
             salas_candidatas.append(sala)
             
         # 4. Calcular Score de Eficiencia (FR-04)
-        # Queremos minimizar los asientos sobrantes para no desperdiciar salas grandes en cursos pequeños.
-        # Ordenamos la lista de menor a mayor diferencia (capacidad - aforo_esperado)
+        # Delegamos el cálculo matemático a la Entidad (Information Expert Pattern).
+        # Ordenamos de menor a mayor score (menor score = menos asientos sobrantes = más eficiente).
         salas_ordenadas = sorted(
             salas_candidatas, 
-            key=lambda s: s.capacidad - aforo_esperado
+            key=lambda s: s.calcular_score_eficiencia(aforo_esperado)
         )
         
         return salas_ordenadas

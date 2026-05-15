@@ -129,6 +129,30 @@ class AsignacionRepositorySQL(IAsignacionRepository):
         asig_db = self.db.query(AsignacionDB).filter(AsignacionDB.estado == "CONFIRMADA").all()
         return [map_asignacion_to_entity(a) for a in asig_db]
 
+    def obtener_asignaciones_detalladas(self) -> List[dict]:
+        # Aquí SÍ es legal usar SQLAlchemy, porque estamos en la capa de Infraestructura
+        asignaciones = (
+            self.db.query(AsignacionDB)
+            .filter(AsignacionDB.estado == "CONFIRMADA")
+            .order_by(AsignacionDB.creado_en.desc())
+            .all()
+        )
+
+        result = []
+        for a in asignaciones:
+            result.append({
+                "id": a.id,
+                "seccion_id": a.seccion_id,
+                "sala_codigo": a.sala.codigo if a.sala else f"#{a.sala_id}",
+                "sala_capacidad": a.sala.capacidad if a.sala else 0,
+                "bloque_dia": a.bloque.dia_semana if a.bloque else "—",
+                "bloque_inicio": str(a.bloque.hora_inicio)[:5] if a.bloque else "—",
+                "bloque_fin": str(a.bloque.hora_fin)[:5] if a.bloque else "—",
+                "estado": a.estado,
+                "creado_en": a.creado_en.strftime("%d/%m/%Y %H:%M") if a.creado_en else "—",
+            })
+        return result
+
 
 class UsuarioRepositorySQL(IUsuarioRepository):
     def __init__(self, db: Session):

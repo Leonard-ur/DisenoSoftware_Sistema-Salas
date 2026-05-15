@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from datetime import time, datetime
+import math
 
 @dataclass
 class Sala:
@@ -17,13 +18,22 @@ class Sala:
         """Verifica si la sala no está en mantenimiento o ya asignada."""
         return self.estado == "DISPONIBLE"
 
+    def capacidad_efectiva(self) -> int:
+        """
+        BR-01 (Aforo Legal y Sanitario): 
+        La capacidad real permitida es el 95% de la capacidad física.
+        Usamos math.floor para redondear hacia abajo por seguridad 
+        (ej: 41 * 0.95 = 38.95 -> 38 asientos reales).
+        """
+        return math.floor(self.capacidad * 0.95)
+
     def cumple_requisitos(self, aforo_esperado: int, requiere_proyector: bool, requiere_enchufes: bool) -> bool:
         """
         Aplica las Reglas de Negocio (Business Rules):
-        - BR-01 (Aforo): Capacidad >= aforo_esperado
+        - BR-01 (Aforo): Capacidad efectiva >= aforo_esperado
         - BR-03 (Equipamiento): Validar proyector y enchufes si se requieren.
         """
-        if self.capacidad < aforo_esperado:
+        if self.capacidad_efectiva() < aforo_esperado:
             return False
         
         if requiere_proyector and not self.proyector_ok:
@@ -33,6 +43,13 @@ class Sala:
             return False
             
         return True
+
+    def calcular_score_eficiencia(self, aforo_esperado: int) -> int:
+        """
+        FR-04 (Sugerencia Óptima): Calcula los asientos sobrantes.
+        Un menor score significa una mayor eficiencia (menos desperdicio de espacio).
+        """
+        return self.capacidad_efectiva() - aforo_esperado
 
 @dataclass
 class Seccion:
