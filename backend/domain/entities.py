@@ -1,85 +1,92 @@
 # domain/entities.py
 
-from dataclasses import dataclass
-from typing import Optional
-from datetime import time, datetime
 import math
+from dataclasses import dataclass
+from datetime import datetime, time
+from typing import Optional
+
 
 @dataclass
-class Sala:
+class Room:
     id: Optional[int]
-    codigo: str
-    capacidad: int
-    estado: str
-    proyector_ok: bool
-    enchufes_usables: int
+    code: str
+    capacity: int
+    status: str
+    has_projector: bool
+    usable_outlets: int
 
-    def esta_disponible(self) -> bool:
-        """Verifica si la sala no está en mantenimiento o ya asignada."""
-        return self.estado == "DISPONIBLE"
+    def is_available(self) -> bool:
+        """Return True when the room is neither under maintenance nor assigned."""
+        return self.status == "DISPONIBLE"
 
-    def capacidad_efectiva(self) -> int:
+    def effective_capacity(self) -> int:
         """
-        BR-01 (Aforo Legal y Sanitario): 
-        La capacidad real permitida es el 95% de la capacidad física.
-        Usamos math.floor para redondear hacia abajo por seguridad 
-        (ej: 41 * 0.95 = 38.95 -> 38 asientos reales).
+        BR-01 (Legal and sanitary capacity):
+        The real allowed capacity is 95% of the physical capacity.
+        math.floor rounds down for safety
+        (e.g. 41 * 0.95 = 38.95 -> 38 real seats).
         """
-        return math.floor(self.capacidad * 0.95)
+        return math.floor(self.capacity * 0.95)
 
-    def cumple_requisitos(self, aforo_esperado: int, requiere_proyector: bool, requiere_enchufes: bool) -> bool:
+    def meets_requirements(
+        self,
+        expected_attendance: int,
+        requires_projector: bool,
+        requires_outlets: bool,
+    ) -> bool:
         """
-        Aplica las Reglas de Negocio (Business Rules):
-        - BR-01 (Aforo): Capacidad efectiva >= aforo_esperado
-        - BR-03 (Equipamiento): Validar proyector y enchufes si se requieren.
+        Apply the business rules:
+        - BR-01 (Capacity): effective capacity >= expected attendance.
+        - BR-03 (Equipment): validate projector and outlets when required.
         """
-        if self.capacidad_efectiva() < aforo_esperado:
+        if self.effective_capacity() < expected_attendance:
             return False
-        
-        if requiere_proyector and not self.proyector_ok:
+        if requires_projector and not self.has_projector:
             return False
-            
-        if requiere_enchufes and self.enchufes_usables <= 0:
+        if requires_outlets and self.usable_outlets <= 0:
             return False
-            
         return True
 
-    def calcular_score_eficiencia(self, aforo_esperado: int) -> int:
+    def efficiency_score(self, expected_attendance: int) -> int:
         """
-        FR-04 (Sugerencia Óptima): Calcula los asientos sobrantes.
-        Un menor score significa una mayor eficiencia (menos desperdicio de espacio).
+        FR-04 (Optimal suggestion): compute the leftover seats.
+        A lower score means higher efficiency (less wasted space).
         """
-        return self.capacidad_efectiva() - aforo_esperado
+        return self.effective_capacity() - expected_attendance
+
 
 @dataclass
-class Seccion:
+class Section:
     id: Optional[int]
-    codigo: str
-    aforo_inscrito: int
-    necesita_proyector: bool
-    necesita_enchufes: bool
-    docente_id: int
+    code: str
+    enrolled_count: int
+    requires_projector: bool
+    requires_outlets: bool
+    teacher_id: int
+
 
 @dataclass
-class BloqueHorario:
+class TimeBlock:
     id: Optional[int]
-    dia_semana: str
-    hora_inicio: time
-    hora_fin: time
+    weekday: str
+    start_time: time
+    end_time: time
+
 
 @dataclass
-class Usuario:
+class User:
     id: Optional[int]
-    nombre: str
+    name: str
     email: str
-    rol: str
+    role: str
+
 
 @dataclass
-class Asignacion:
+class Assignment:
     id: Optional[int]
-    seccion_id: int
-    sala_id: int
-    bloque_id: int
-    estado: str
-    confirmado_por: int
-    creado_en: Optional[datetime] = None
+    section_id: int
+    room_id: int
+    time_block_id: int
+    status: str
+    confirmed_by: int
+    created_at: Optional[datetime] = None

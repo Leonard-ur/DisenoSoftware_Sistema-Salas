@@ -1,203 +1,242 @@
-import sys
-import os
-# Esto le dice a Python que la carpeta raíz del proyecto es la que está un nivel más arriba.
-# Así podrá encontrar las carpetas 'domain', 'use_cases', etc.
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# infrastructure/repository.py
 
 from typing import List, Optional
-from sqlalchemy.orm import Session
+
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-# 1. Importamos los modelos de la Base de Datos de Lucas (con alias para no confundir)
-from infrastructure.crear_db import (
-    Sala as SalaDB, 
-    Usuario as UsuarioDB, 
-    Asignacion as AsignacionDB, 
-    BloqueHorario as BloqueHorarioDB, 
-    Seccion as SeccionDB
-)
-
-# 2. Importamos las Entidades puras y los Puertos de Camilo
-from domain.entities import Sala, Usuario, Asignacion, BloqueHorario
+from domain.entities import Assignment, Room, TimeBlock, User
 from domain.ports import (
-    ISalaRepository, 
-    IAsignacionRepository, 
-    IUsuarioRepository, 
-    IBloqueHorarioRepository
+    IAssignmentRepository,
+    IRoomRepository,
+    ITimeBlockRepository,
+    IUserRepository,
 )
+from infrastructure.database import Assignment as AssignmentModel
+from infrastructure.database import Room as RoomModel
+from infrastructure.database import TimeBlock as TimeBlockModel
+from infrastructure.database import User as UserModel
 
 # ==========================================
-# MAPPERS (Traductores de DB a Entidad Pura)
+# MAPPERS (translate ORM models to pure entities)
 # ==========================================
-def map_sala_to_entity(sala_db: SalaDB) -> Optional[Sala]:
-    if not sala_db: return None
-    return Sala(
-        id=sala_db.id,
-        codigo=sala_db.codigo,
-        capacidad=sala_db.capacidad,
-        estado=sala_db.estado,
-        proyector_ok=sala_db.proyector_ok,
-        enchufes_usables=sala_db.enchufes_usables
-    )
 
-def map_asignacion_to_entity(asig_db: AsignacionDB) -> Optional[Asignacion]:
-    if not asig_db: return None
-    return Asignacion(
-        id=asig_db.id,
-        seccion_id=asig_db.seccion_id,
-        sala_id=asig_db.sala_id,
-        bloque_id=asig_db.bloque_id,
-        estado=asig_db.estado,
-        confirmado_por=asig_db.confirmado_por,
-        creado_en=asig_db.creado_en
-    )
 
-def map_usuario_to_entity(user_db: UsuarioDB) -> Optional[Usuario]:
-    if not user_db: return None
-    return Usuario(
-        id=user_db.id,
-        nombre=user_db.nombre,
-        email=user_db.email,
-        rol=user_db.rol
-    )
-
-def map_bloque_to_entity(bloque_db: BloqueHorarioDB) -> Optional[BloqueHorario]:
-    if not bloque_db: return None
-    return BloqueHorario(
-        id=bloque_db.id,
-        dia_semana=bloque_db.dia_semana,
-        hora_inicio=bloque_db.hora_inicio,
-        hora_fin=bloque_db.hora_fin
+def _map_room(model: Optional[RoomModel]) -> Optional[Room]:
+    if model is None:
+        return None
+    return Room(
+        id=model.id,
+        code=model.code,
+        capacity=model.capacity,
+        status=model.status,
+        has_projector=model.has_projector,
+        usable_outlets=model.usable_outlets,
     )
 
 
+def _map_assignment(model: Optional[AssignmentModel]) -> Optional[Assignment]:
+    if model is None:
+        return None
+    return Assignment(
+        id=model.id,
+        section_id=model.section_id,
+        room_id=model.room_id,
+        time_block_id=model.time_block_id,
+        status=model.status,
+        confirmed_by=model.confirmed_by,
+        created_at=model.created_at,
+    )
+
+
+def _map_user(model: Optional[UserModel]) -> Optional[User]:
+    if model is None:
+        return None
+    return User(
+        id=model.id,
+        name=model.name,
+        email=model.email,
+        role=model.role,
+    )
+
+
+def _map_time_block(model: Optional[TimeBlockModel]) -> Optional[TimeBlock]:
+    if model is None:
+        return None
+    return TimeBlock(
+        id=model.id,
+        weekday=model.weekday,
+        start_time=model.start_time,
+        end_time=model.end_time,
+    )
+
+
+def _to_detail_dict(model: AssignmentModel) -> dict:
+    """Build the cross-referenced read model for a single assignment."""
+    room = model.room
+    block = model.time_block
+    return {
+        "id": model.id,
+        "section_id": model.section_id,
+        "room_code": room.code if room else f"#{model.room_id}",
+        "room_capacity": room.capacity if room else 0,
+        "time_block_day": block.weekday if block else "—",
+        "time_block_start": str(block.start_time)[:5] if block else "—",
+        "time_block_end": str(block.end_time)[:5] if block else "—",
+        "status": model.status,
+        "created_at": (
+            model.created_at.strftime("%d/%m/%Y %H:%M")
+            if model.created_at
+            else "—"
+        ),
+    }
+
+
 # ==========================================
-# REPOSITORIOS (Implementación de los Puertos)
+# REPOSITORIES (port implementations)
 # ==========================================
 
-class SalaRepositorySQL(ISalaRepository):
+
+class RoomRepositorySQL(IRoomRepository):
     def __init__(self, db: Session):
         self.db = db
 
-    def obtener_todas_las_salas(self) -> List[Sala]:
-        salas_db = self.db.query(SalaDB).order_by(SalaDB.codigo).all()
-        return [map_sala_to_entity(s) for s in salas_db]
+    def get_all_rooms(self) -> List[Room]:
+        rows = self.db.query(RoomModel).order_by(RoomModel.code).all()
+        return [_map_room(row) for row in rows]
 
-    def obtener_sala_por_id(self, sala_id: int) -> Optional[Sala]:
-        sala_db = self.db.query(SalaDB).filter(SalaDB.id == sala_id).first()
-        if not sala_db:
-            raise ValueError(f"No existe una sala con ID {sala_id}")
-        return map_sala_to_entity(sala_db)
+    def get_room_by_id(self, room_id: int) -> Optional[Room]:
+        row = self.db.query(RoomModel).filter(RoomModel.id == room_id).first()
+        if row is None:
+            raise ValueError(f"Room with id {room_id} does not exist")
+        return _map_room(row)
 
-    def obtener_salas_disponibles(self) -> List[Sala]:
-        salas_db = self.db.query(SalaDB).filter(SalaDB.estado == "DISPONIBLE").order_by(SalaDB.codigo).all()
-        return [map_sala_to_entity(s) for s in salas_db]
-
-    def buscar_salas(self, aforo: int, necesita_proyector: bool, necesita_enchufes: bool) -> List[Sala]:
-        query = self.db.query(SalaDB).filter(SalaDB.estado == "DISPONIBLE", SalaDB.capacidad >= aforo)
-        if necesita_proyector:
-            query = query.filter(SalaDB.proyector_ok == True)
-        if necesita_enchufes:
-            query = query.filter(SalaDB.enchufes_usables > 0)
-        
-        salas_db = query.order_by(SalaDB.capacidad).all()
-        return [map_sala_to_entity(s) for s in salas_db]
-
-
-class AsignacionRepositorySQL(IAsignacionRepository):
-    def __init__(self, db: Session):
-        self.db = db
-
-    def guardar_solicitud(self, seccion_id: int, sala_id: int, bloque_id: int, confirmado_por: int) -> Asignacion:
-        asignacion_db = AsignacionDB(
-            seccion_id=seccion_id,
-            sala_id=sala_id,
-            bloque_id=bloque_id,
-            confirmado_por=confirmado_por,
-            estado="CONFIRMADA",
-        )
-        try:
-            self.db.add(asignacion_db)
-            self.db.commit()
-            self.db.refresh(asignacion_db)
-            return map_asignacion_to_entity(asignacion_db)
-        except IntegrityError:
-            self.db.rollback()
-            raise ValueError(f"La sala {sala_id} ya está ocupada en el bloque {bloque_id}. No se puede registrar la asignación.")
-
-    def obtener_todas_las_asignaciones(self) -> List[Asignacion]:
-        asig_db = self.db.query(AsignacionDB).filter(AsignacionDB.estado == "CONFIRMADA").all()
-        return [map_asignacion_to_entity(a) for a in asig_db]
-
-    def obtener_asignaciones_detalladas(self) -> List[dict]:
-        # Aquí SÍ es legal usar SQLAlchemy, porque estamos en la capa de Infraestructura
-        asignaciones = (
-            self.db.query(AsignacionDB)
-            .filter(AsignacionDB.estado == "CONFIRMADA")
-            .order_by(AsignacionDB.creado_en.desc())
+    def get_available_rooms(self) -> List[Room]:
+        rows = (
+            self.db.query(RoomModel)
+            .filter(RoomModel.status == "DISPONIBLE")
+            .order_by(RoomModel.code)
             .all()
         )
+        return [_map_room(row) for row in rows]
 
-        result = []
-        for a in asignaciones:
-            result.append({
-                "id": a.id,
-                "seccion_id": a.seccion_id,
-                "sala_codigo": a.sala.codigo if a.sala else f"#{a.sala_id}",
-                "sala_capacidad": a.sala.capacidad if a.sala else 0,
-                "bloque_dia": a.bloque.dia_semana if a.bloque else "—",
-                "bloque_inicio": str(a.bloque.hora_inicio)[:5] if a.bloque else "—",
-                "bloque_fin": str(a.bloque.hora_fin)[:5] if a.bloque else "—",
-                "estado": a.estado,
-                "creado_en": a.creado_en.strftime("%d/%m/%Y %H:%M") if a.creado_en else "—",
-            })
-        return result
-
-
-class UsuarioRepositorySQL(IUsuarioRepository):
-    def __init__(self, db: Session):
-        self.db = db
-
-    def añadir_usuario(self, nombre: str, email: str, rol: str) -> Usuario:
-        roles_validos = {"DOCENTE", "COORDINADOR"}
-        if rol not in roles_validos:
-            raise ValueError(f"Rol '{rol}' no válido. Usa: {', '.join(roles_validos)}")
-
-        usuario_db = UsuarioDB(nombre=nombre, email=email, rol=rol)
-        try:
-            self.db.add(usuario_db)
-            self.db.commit()
-            self.db.refresh(usuario_db)
-            return map_usuario_to_entity(usuario_db)
-        except IntegrityError:
-            self.db.rollback()
-            raise ValueError(f"El mail '{email}' ya está registrado en el sistema.")
-
-    def obtener_usuario_por_id(self, usuario_id: int) -> Optional[Usuario]:
-        user_db = self.db.query(UsuarioDB).filter(UsuarioDB.id == usuario_id).first()
-        if not user_db:
-            raise ValueError(f"No existe un usuario con ID {usuario_id}")
-        return map_usuario_to_entity(user_db)
-
-
-class BloqueHorarioRepositorySQL(IBloqueHorarioRepository):
-    def __init__(self, db: Session):
-        self.db = db
-
-    def obtener_bloque_disponible(self, sala_id: int) -> List[BloqueHorario]:
-        bloques_ocupados = (
-            self.db.query(AsignacionDB.bloque_id)
-            .filter(AsignacionDB.sala_id == sala_id, AsignacionDB.estado == "CONFIRMADA")
-            .subquery()
+    def search_rooms(
+        self,
+        attendance: int,
+        requires_projector: bool,
+        requires_outlets: bool,
+    ) -> List[Room]:
+        query = self.db.query(RoomModel).filter(
+            RoomModel.status == "DISPONIBLE",
+            RoomModel.capacity >= attendance,
         )
-        bloques_db = (
-            self.db.query(BloqueHorarioDB)
-            .filter(BloqueHorarioDB.id.notin_(bloques_ocupados))
-            .order_by(BloqueHorarioDB.dia_semana, BloqueHorarioDB.hora_inicio)
+        if requires_projector:
+            query = query.filter(RoomModel.has_projector.is_(True))
+        if requires_outlets:
+            query = query.filter(RoomModel.usable_outlets > 0)
+        rows = query.order_by(RoomModel.capacity).all()
+        return [_map_room(row) for row in rows]
+
+
+class AssignmentRepositorySQL(IAssignmentRepository):
+    def __init__(self, db: Session):
+        self.db = db
+
+    def save_request(
+        self,
+        section_id: int,
+        room_id: int,
+        time_block_id: int,
+        confirmed_by: int,
+    ) -> Assignment:
+        model = AssignmentModel(
+            section_id=section_id,
+            room_id=room_id,
+            time_block_id=time_block_id,
+            confirmed_by=confirmed_by,
+            status="CONFIRMADA",
+        )
+        try:
+            self.db.add(model)
+            self.db.commit()
+            self.db.refresh(model)
+            return _map_assignment(model)
+        except IntegrityError as error:
+            self.db.rollback()
+            raise ValueError(
+                f"Room {room_id} is already booked for time block "
+                f"{time_block_id}; the assignment cannot be registered."
+            ) from error
+
+    def get_all_assignments(self) -> List[Assignment]:
+        rows = (
+            self.db.query(AssignmentModel)
+            .filter(AssignmentModel.status == "CONFIRMADA")
             .all()
         )
-        return [map_bloque_to_entity(b) for b in bloques_db]
+        return [_map_assignment(row) for row in rows]
 
-    def obtener_todos_los_bloques(self) -> List[BloqueHorario]:
-        bloques_db = self.db.query(BloqueHorarioDB).order_by(BloqueHorarioDB.dia_semana, BloqueHorarioDB.hora_inicio).all()
-        return [map_bloque_to_entity(b) for b in bloques_db]
+    def get_detailed_assignments(self) -> List[dict]:
+        rows = (
+            self.db.query(AssignmentModel)
+            .filter(AssignmentModel.status == "CONFIRMADA")
+            .order_by(AssignmentModel.created_at.desc())
+            .all()
+        )
+        return [_to_detail_dict(row) for row in rows]
+
+
+class UserRepositorySQL(IUserRepository):
+    VALID_ROLES = {"DOCENTE", "COORDINADOR"}
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add_user(self, name: str, email: str, role: str) -> User:
+        if role not in self.VALID_ROLES:
+            valid = ", ".join(sorted(self.VALID_ROLES))
+            raise ValueError(f"Role '{role}' is not valid. Use: {valid}")
+        model = UserModel(name=name, email=email, role=role)
+        try:
+            self.db.add(model)
+            self.db.commit()
+            self.db.refresh(model)
+            return _map_user(model)
+        except IntegrityError as error:
+            self.db.rollback()
+            raise ValueError(
+                f"Email '{email}' is already registered in the system."
+            ) from error
+
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
+        row = self.db.query(UserModel).filter(UserModel.id == user_id).first()
+        if row is None:
+            raise ValueError(f"User with id {user_id} does not exist")
+        return _map_user(row)
+
+
+class TimeBlockRepositorySQL(ITimeBlockRepository):
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_available_blocks(self, room_id: int) -> List[TimeBlock]:
+        booked_blocks = select(AssignmentModel.time_block_id).where(
+            AssignmentModel.room_id == room_id,
+            AssignmentModel.status == "CONFIRMADA",
+        )
+        rows = (
+            self.db.query(TimeBlockModel)
+            .filter(TimeBlockModel.id.notin_(booked_blocks))
+            .order_by(TimeBlockModel.weekday, TimeBlockModel.start_time)
+            .all()
+        )
+        return [_map_time_block(row) for row in rows]
+
+    def get_all_blocks(self) -> List[TimeBlock]:
+        rows = (
+            self.db.query(TimeBlockModel)
+            .order_by(TimeBlockModel.weekday, TimeBlockModel.start_time)
+            .all()
+        )
+        return [_map_time_block(row) for row in rows]

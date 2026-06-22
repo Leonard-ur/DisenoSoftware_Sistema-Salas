@@ -1,66 +1,78 @@
-from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 
-#requisitos que el usuario envía para buscar una sala
-class SolicitudSugerencia(BaseModel):
-    bloque_id: int
-    aforo_esperado: int
-    necesita_proyector: bool
-    necesita_enchufes: bool
+from pydantic import BaseModel, ConfigDict
 
-#datos necesarios para confirmar una reserva
-class ConfirmacionAsignacion(BaseModel):
-    seccion_id: int
-    sala_id: int
-    bloque_id: int
-    coordinador_id: int
 
-#representación básica de una sala
-class SalaResponse(BaseModel):
+class RoomSuggestionRequest(BaseModel):
+    """Requirements sent by the user to search for a room."""
+
+    time_block_id: int
+    expected_attendance: int
+    requires_projector: bool
+    requires_outlets: bool
+
+
+class AssignmentRequest(BaseModel):
+    """Data needed to confirm an assignment."""
+
+    section_id: int
+    room_id: int
+    time_block_id: int
+    coordinator_id: int
+
+
+class RoomResponse(BaseModel):
+    """Basic representation of a room."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
-    codigo: str 
-    capacidad: int
-    estado: str
-    proyector_ok: bool
-    enchufes_usables: int
+    code: str
+    capacity: int
+    status: str
+    has_projector: bool
+    usable_outlets: int
 
-    class Config:
-        from_attributes = True
 
-#respuesta que contiene la lista de recomendaciones
-class SugerenciaResponse(BaseModel):
-    mensaje: str
-    salas_sugeridas: List[SalaResponse]
+class RoomSuggestionResponse(BaseModel):
+    """Response holding the list of recommended rooms."""
 
-#confirmación básica de una asignación creada
-class AsignacionResponse(BaseModel):
+    message: str
+    suggested_rooms: List[RoomResponse]
+
+
+class AssignmentResponse(BaseModel):
+    """Basic confirmation of a created assignment."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
-    seccion_id: int
-    sala_id: int
-    bloque_id: int
-    estado: str
+    section_id: int
+    room_id: int
+    time_block_id: int
+    status: str
 
-    class Config:
-        from_attributes = True
 
-#información detallada de una asignación para el usuario final
-class AsignacionDetalleResponse(BaseModel):
+class AssignmentDetailResponse(BaseModel):
+    """Detailed assignment information for the end user."""
+
     id: int
-    seccion_id: int
-    sala_codigo: str
-    sala_capacidad: int
-    bloque_dia: str
-    bloque_inicio: str
-    bloque_fin: str
-    estado: str
-    creado_en: str
+    section_id: int
+    room_code: str
+    room_capacity: int
+    time_block_day: str
+    time_block_start: str
+    time_block_end: str
+    status: str
+    created_at: str
 
-#representación de un bloque horario
-class BloqueResponse(BaseModel):
+
+class TimeBlockResponse(BaseModel):
+    """Representation of a time block."""
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
-    dia_semana: str
-    hora_inicio: str
-    hora_fin: str
-
-    class Config:
-        from_attributes = True
+    weekday: str
+    start_time: str
+    end_time: str
