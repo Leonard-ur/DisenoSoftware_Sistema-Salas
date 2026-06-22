@@ -1,27 +1,22 @@
 # backend/main.py
 
-import sys
-import os
-from typing import List as TypingList
+from typing import List
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 import schemas
-
-from infrastructure.crear_db import SessionLocal
+from infrastructure.database import SessionLocal
 from infrastructure.repository import (
-    SalaRepositorySQL,
-    AsignacionRepositorySQL,
-    BloqueHorarioRepositorySQL,
+    AssignmentRepositorySQL,
+    RoomRepositorySQL,
+    TimeBlockRepositorySQL,
 )
-from use_cases.asignar_sala import AsignacionUseCase
+from use_cases.assignment import AssignmentUseCase
 from use_cases.dashboard import DashboardUseCase
 
-app = FastAPI(title="API Asignación de Salas - Comando Estelar")
+app = FastAPI(title="Room Assignment API - Comando Estelar")
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,6 +26,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+router = APIRouter(prefix="/api/v1")
+
+
+# ==========================================
+# DEPENDENCIES (composition root)
+# ==========================================
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -38,71 +41,92 @@ def get_db():
     finally:
         db.close()
 
-# ==========================================
-# ENDPOINTS DE ASIGNACIÓN
-# ==========================================
 
-@app.post("/api/sugerir-salas", response_model=schemas.SugerenciaResponse)
-def sugerir_salas(solicitud: schemas.SolicitudSugerencia, db: Session = Depends(get_db)):
-    sala_repo = SalaRepositorySQL(db)
-    asignacion_repo = AsignacionRepositorySQL(db)
-    bloque_repo = BloqueHorarioRepositorySQL(db)
-
-    use_case = AsignacionUseCase(sala_repo, asignacion_repo, bloque_repo)
-    salas_optimas = use_case.sugerir_salas_optimas(
-        bloque_id=solicitud.bloque_id,
-        aforo_esperado=solicitud.aforo_esperado,
-        necesita_proyector=solicitud.necesita_proyector,
-        necesita_enchufes=solicitud.necesita_enchufes,
+def get_assignment_use_case(
+    db: Session = Depends(get_db),
+) -> AssignmentUseCase:
+    return AssignmentUseCase(
+        RoomRepositorySQL(db),
+        AssignmentRepositorySQL(db),
+        TimeBlockRepositorySQL(db),
     )
 
-    if not salas_optimas:
-        return {"mensaje": "No se encontraron salas que cumplan los requisitos.", "salas_sugeridas": []}
-    return {"mensaje": "Salas encontradas con éxito.", "salas_sugeridas": salas_optimas}
+
+def get_dashboard_use_case(
+    db: Session = Depends(get_db),
+) -> DashboardUseCase:
+    return DashboardUseCase(RoomRepositorySQL(db), AssignmentRepositorySQL(db))
 
 
-@app.post("/api/asignar", response_model=schemas.AsignacionResponse)
-def confirmar_asignacion(confirmacion: schemas.ConfirmacionAsignacion, db: Session = Depends(get_db)):
-    sala_repo = SalaRepositorySQL(db)
-    asignacion_repo = AsignacionRepositorySQL(db)
-    bloque_repo = BloqueHorarioRepositorySQL(db)
+def get_room_repository(db: Session = Depends(get_db)) -> RoomRepositorySQL:
+    return RoomRepositorySQL(db)
 
-    use_case = AsignacionUseCase(sala_repo, asignacion_repo, bloque_repo)
+
+# ==========================================
+# ASSIGNMENT RESOURCES
+# ==========================================
+
+
+@router.post("/room-suggestions", response_model=schemas.RoomSuggestionResponse)
+def create_room_suggestions(
+    request: schemas.RoomSuggestionRequest,
+    use_case: AssignmentUseCase = Depends(get_assignment_use_case),
+):
+    rooms = use_case.suggest_optimal_rooms(
+        time_block_id=request.time_block_id,
+        expected_attendance=request.expected_attendance,
+        requires_projector=request.requires_projector,
+        requires_outlets=request.requires_outlets,
+    )
+    if not rooms:
+        return {
+            "message": "No rooms match the given requirements.",
+            "suggested_rooms": [],
+        }
+    return {"message": "Rooms found successfully.", "suggested_rooms": rooms}
+
+
+@router.post("/assignments", response_model=schemas.AssignmentResponse)
+def create_assignment(
+    request: schemas.AssignmentRequest,
+    use_case: AssignmentUseCase = Depends(get_assignment_use_case),
+):
     try:
-        asignacion = use_case.confirmar_asignacion(
-            seccion_id=confirmacion.seccion_id,
-            sala_id=confirmacion.sala_id,
-            bloque_id=confirmacion.bloque_id,
-            coordinador_id=confirmacion.coordinador_id,
+        return use_case.confirm_assignment(
+            section_id=request.section_id,
+            room_id=request.room_id,
+            time_block_id=request.time_block_id,
+            coordinator_id=request.coordinator_id,
         )
-        return asignacion
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.get(
+    "/assignments",
+    response_model=List[schemas.AssignmentDetailResponse],
+)
+def list_assignments(
+    use_case: DashboardUseCase = Depends(get_dashboard_use_case),
+):
+    return use_case.list_teacher_assignments()
 
 
 # ==========================================
-# ENDPOINTS DE DASHBOARD Y LISTADOS
+# DASHBOARD AND ROOM RESOURCES
 # ==========================================
 
-@app.get("/api/estadisticas")
-def obtener_estadisticas(db: Session = Depends(get_db)):
-    sala_repo = SalaRepositorySQL(db)
-    asignacion_repo = AsignacionRepositorySQL(db)
-    
-    use_case = DashboardUseCase(sala_repo, asignacion_repo)
-    return use_case.obtener_estadisticas_generales()
+
+@router.get("/statistics")
+def get_statistics(
+    use_case: DashboardUseCase = Depends(get_dashboard_use_case),
+):
+    return use_case.get_general_statistics()
 
 
-@app.get("/api/salas", response_model=TypingList[schemas.SalaResponse])
-def listar_todas_las_salas(db: Session = Depends(get_db)):
-    sala_repo = SalaRepositorySQL(db)
-    return sala_repo.obtener_todas_las_salas()
+@router.get("/rooms", response_model=List[schemas.RoomResponse])
+def list_rooms(repository: RoomRepositorySQL = Depends(get_room_repository)):
+    return repository.get_all_rooms()
 
 
-@app.get("/api/asignaciones-detalle")
-def listar_asignaciones_detalle(db: Session = Depends(get_db)):
-    sala_repo = SalaRepositorySQL(db)
-    asignacion_repo = AsignacionRepositorySQL(db)
-    
-    use_case = DashboardUseCase(sala_repo, asignacion_repo)
-    return use_case.listar_asignaciones_profesor()
+app.include_router(router)

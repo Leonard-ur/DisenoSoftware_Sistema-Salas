@@ -1,0 +1,99 @@
+# use_cases/assignment.py
+
+from typing import List
+
+from domain.entities import Assignment, Room
+from domain.ports import (
+    IAssignmentRepository,
+    IRoomRepository,
+    ITimeBlockRepository,
+)
+
+
+class AssignmentUseCase:
+    def __init__(
+        self,
+        room_repo: IRoomRepository,
+        assignment_repo: IAssignmentRepository,
+        time_block_repo: ITimeBlockRepository,
+    ):
+        """
+        Dependency injection: the use case does not create the database
+        connections. They are provided from the outside (wired in main.py).
+        """
+        self.room_repo = room_repo
+        self.assignment_repo = assignment_repo
+        self.time_block_repo = time_block_repo
+
+    def suggest_optimal_rooms(
+        self,
+        time_block_id: int,
+        expected_attendance: int,
+        requires_projector: bool,
+        requires_outlets: bool,
+    ) -> List[Room]:
+        """
+        FR-04 (Optimal suggestion): evaluate the operational rooms and return
+        the eligible ones sorted by efficiency (least wasted space first).
+        """
+        candidates = [
+            room
+            for room in self.room_repo.get_available_rooms()
+            if self._is_eligible(
+                room,
+                time_block_id,
+                expected_attendance,
+                requires_projector,
+                requires_outlets,
+            )
+        ]
+        return sorted(
+            candidates,
+            key=lambda room: room.efficiency_score(expected_attendance),
+        )
+
+    def _is_eligible(
+        self,
+        room: Room,
+        time_block_id: int,
+        expected_attendance: int,
+        requires_projector: bool,
+        requires_outlets: bool,
+    ) -> bool:
+        """
+        Check the immutable business rules for a single room:
+        - BR-01 (Capacity) and BR-03 (Equipment), delegated to the entity.
+        - BR-02 (Overlap): the room must be free in the requested time block.
+        """
+        if not room.meets_requirements(
+            expected_attendance, requires_projector, requires_outlets
+        ):
+            return False
+        free_block_ids = {
+            block.id
+            for block in self.time_block_repo.get_available_blocks(room.id)
+        }
+        return time_block_id in free_block_ids
+
+    def confirm_assignment(
+        self,
+        section_id: int,
+        room_id: int,
+        time_block_id: int,
+        coordinator_id: int,
+    ) -> Assignment:
+        """
+        FR-06 (Confirmation): register the final assignment.
+        BR-05 (Concurrency): if two coordinators try to book the same room at
+        the same time, the repository raises ValueError, re-raised here as a
+        RuntimeError for the web layer to translate into an HTTP error.
+        """
+        try:
+            return self.assignment_repo.save_request(
+                section_id=section_id,
+                room_id=room_id,
+                time_block_id=time_block_id,
+                confirmed_by=coordinator_id,
+            )
+        except ValueError as error:
+            raise RuntimeError(f"Assignment conflict: {error}") from error

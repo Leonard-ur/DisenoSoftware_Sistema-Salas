@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_URL = 'http://localhost:8000/api';
+    const API_URL = 'http://localhost:8000/api/v1';
 
     // ==========================================
     // LÓGICA DE NAVEGACIÓN (SPA)
@@ -65,16 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Cargamos stats y asignaciones en paralelo
             const [statsRes, asigRes] = await Promise.all([
-                fetch(`${API_URL}/estadisticas`),
-                fetch(`${API_URL}/asignaciones-detalle`),
+                fetch(`${API_URL}/statistics`),
+                fetch(`${API_URL}/assignments`),
             ]);
 
             if (statsRes.ok) {
                 const stats = await statsRes.json();
-                setTexto('stat-total',          stats.total_salas);
-                setTexto('stat-disponibles',    stats.disponibles);
-                setTexto('stat-asignadas',      stats.asignaciones ?? stats.asignadas);
-                setTexto('stat-mantenimiento',  stats.mantenimiento);
+                setTexto('stat-total',          stats.total_rooms);
+                setTexto('stat-disponibles',    stats.available);
+                setTexto('stat-asignadas',      stats.assigned);
+                setTexto('stat-mantenimiento',  stats.maintenance);
             }
 
             const contenedor = document.getElementById('tabla-asignaciones-panel');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!contenedor) return;
 
         try {
-            const res = await fetch(`${API_URL}/salas`);
+            const res = await fetch(`${API_URL}/rooms`);
             if (!res.ok) throw new Error('Error al obtener salas');
             todasLasSalas = await res.json();
             renderTarjetasSalas('TODOS');
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const salas = filtro === 'TODOS'
             ? todasLasSalas
-            : todasLasSalas.filter(s => s.estado === filtro);
+            : todasLasSalas.filter(s => s.status === filtro);
 
         if (salas.length === 0) {
             contenedor.innerHTML = `
@@ -138,27 +138,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 'ASIGNADA':     { badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', dot: 'bg-yellow-500', icono: 'fa-lock' },
                 'MANTENIMIENTO':{ badge: 'bg-red-100 text-red-700 border-red-200',         dot: 'bg-red-500',    icono: 'fa-screwdriver-wrench' },
             };
-            const cfg = estadoConfig[sala.estado] || estadoConfig['DISPONIBLE'];
+            const cfg = estadoConfig[sala.status] || estadoConfig['DISPONIBLE'];
 
             return `
             <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-bold text-[#0A2540]">
-                        <i class="fa-solid fa-door-open mr-2 text-gray-400"></i>${sala.codigo}
+                        <i class="fa-solid fa-door-open mr-2 text-gray-400"></i>${sala.code}
                     </h4>
                     <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.badge}">
-                        <span class="w-1.5 h-1.5 rounded-full ${cfg.dot}"></span>${sala.estado}
+                        <span class="w-1.5 h-1.5 rounded-full ${cfg.dot}"></span>${sala.status}
                     </span>
                 </div>
                 <div class="space-y-1.5 text-sm text-gray-600">
-                    <p><i class="fa-solid fa-users w-4 mr-1 text-gray-400"></i> Capacidad: <strong>${sala.capacidad} personas</strong></p>
+                    <p><i class="fa-solid fa-users w-4 mr-1 text-gray-400"></i> Capacidad: <strong>${sala.capacity} personas</strong></p>
                     <p>
                         <i class="fa-solid fa-display w-4 mr-1 text-gray-400"></i>
-                        Proyector: <strong>${sala.proyector_ok ? '<span class="text-green-600">Disponible</span>' : '<span class="text-gray-400">No disponible</span>'}</strong>
+                        Proyector: <strong>${sala.has_projector ? '<span class="text-green-600">Disponible</span>' : '<span class="text-gray-400">No disponible</span>'}</strong>
                     </p>
                     <p>
                         <i class="fa-solid fa-plug w-4 mr-1 text-gray-400"></i>
-                        Enchufes: <strong>${sala.enchufes_usables > 0 ? sala.enchufes_usables + ' usables' : '<span class="text-gray-400">Sin enchufes</span>'}</strong>
+                        Enchufes: <strong>${sala.usable_outlets > 0 ? sala.usable_outlets + ' usables' : '<span class="text-gray-400">Sin enchufes</span>'}</strong>
                     </p>
                 </div>
             </div>`;
@@ -189,14 +189,14 @@ document.addEventListener('DOMContentLoaded', () => {
     async function cargarInicioProfesor() {
         try {
             const [statsRes, asigRes] = await Promise.all([
-                fetch(`${API_URL}/estadisticas`),
-                fetch(`${API_URL}/asignaciones-detalle`),
+                fetch(`${API_URL}/statistics`),
+                fetch(`${API_URL}/assignments`),
             ]);
 
             if (statsRes.ok) {
                 const stats = await statsRes.json();
-                setTexto('prof-stat-disponibles',   stats.disponibles);
-                setTexto('prof-stat-mantenimiento', stats.mantenimiento);
+                setTexto('prof-stat-disponibles',   stats.available);
+                setTexto('prof-stat-mantenimiento', stats.maintenance);
             }
             if (asigRes.ok) {
                 const asig = await asigRes.json();
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!contenedor) return;
 
         try {
-            const res = await fetch(`${API_URL}/asignaciones-detalle`);
+            const res = await fetch(`${API_URL}/assignments`);
             if (!res.ok) throw new Error('Error al obtener asignaciones');
             const asignaciones = await res.json();
             contenedor.innerHTML = renderTablaAsignaciones(asignaciones, false);
@@ -245,18 +245,18 @@ document.addEventListener('DOMContentLoaded', () => {
             <tr class="hover:bg-slate-50 transition-colors">
                 <td class="p-4 text-sm font-mono text-gray-500">#${a.id}</td>
                 <td class="p-4 font-semibold text-[#0A2540]">
-                    <i class="fa-solid fa-door-open mr-2 text-gray-300"></i>${a.sala_codigo}
+                    <i class="fa-solid fa-door-open mr-2 text-gray-300"></i>${a.room_code}
                 </td>
-                <td class="p-4 text-sm text-gray-700">${a.bloque_dia}</td>
+                <td class="p-4 text-sm text-gray-700">${a.time_block_day}</td>
                 <td class="p-4">
                     <span class="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded border border-blue-100 font-medium">
-                        ${a.bloque_inicio} – ${a.bloque_fin}
+                        ${a.time_block_start} – ${a.time_block_end}
                     </span>
                 </td>
-                ${compacto ? '' : `<td class="p-4 text-xs text-gray-400">${a.creado_en}</td>`}
+                ${compacto ? '' : `<td class="p-4 text-xs text-gray-400">${a.created_at}</td>`}
                 <td class="p-4">
                     <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-semibold">
-                        <i class="fa-solid fa-check mr-1"></i>${a.estado}
+                        <i class="fa-solid fa-check mr-1"></i>${a.status}
                     </span>
                 </td>
             </tr>`).join('');
@@ -325,14 +325,14 @@ document.addEventListener('DOMContentLoaded', () => {
             loaderMotor.classList.remove('hidden');
 
             const payloadSugerencia = {
-                bloque_id: 1,
-                aforo_esperado: 45,
-                necesita_proyector: true,
-                necesita_enchufes: false,
+                time_block_id: 1,
+                expected_attendance: 45,
+                requires_projector: true,
+                requires_outlets: false,
             };
 
             try {
-                const response = await fetch(`${API_URL}/sugerir-salas`, {
+                const response = await fetch(`${API_URL}/room-suggestions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payloadSugerencia),
@@ -340,21 +340,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const data = await response.json();
 
-                if (response.ok && data.salas_sugeridas.length > 0) {
-                    const mejorSala = data.salas_sugeridas[0];
+                if (response.ok && data.suggested_rooms.length > 0) {
+                    const mejorSala = data.suggested_rooms[0];
                     salaSugeridaId = mejorSala.id;
 
                     resultadoMotor.innerHTML = `
                         <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                             <p class="text-sm text-green-800 font-semibold mb-1">¡Sala óptima encontrada!</p>
                             <h4 class="text-2xl font-bold text-green-900 flex items-center gap-2">
-                                <i class="fa-solid fa-door-open"></i> Sala ${mejorSala.codigo}
+                                <i class="fa-solid fa-door-open"></i> Sala ${mejorSala.code}
                             </h4>
                         </div>
                         <ul class="text-sm text-gray-600 space-y-2 border-t pt-3 mt-3">
-                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Capacidad:</strong> ${mejorSala.capacidad} cupos</li>
-                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Proyector:</strong> ${mejorSala.proyector_ok ? 'Disponible' : 'No disponible'}</li>
-                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Estado:</strong> ${mejorSala.estado}</li>
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Capacidad:</strong> ${mejorSala.capacity} cupos</li>
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Proyector:</strong> ${mejorSala.has_projector ? 'Disponible' : 'No disponible'}</li>
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> <strong>Estado:</strong> ${mejorSala.status}</li>
                         </ul>`;
 
                     loaderMotor.classList.add('hidden');
@@ -385,14 +385,14 @@ document.addEventListener('DOMContentLoaded', () => {
             btnConfirmarAsignacion.disabled = true;
 
             const payloadAsignacion = {
-                seccion_id: 1,
-                sala_id: salaSugeridaId,
-                bloque_id: 1,
-                coordinador_id: 1,
+                section_id: 1,
+                room_id: salaSugeridaId,
+                time_block_id: 1,
+                coordinator_id: 1,
             };
 
             try {
-                const response = await fetch(`${API_URL}/asignar`, {
+                const response = await fetch(`${API_URL}/assignments`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payloadAsignacion),
