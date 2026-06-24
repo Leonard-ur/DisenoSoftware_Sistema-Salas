@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,6 +10,8 @@ class RoomSuggestionRequest(BaseModel):
     expected_attendance: int
     requires_projector: bool
     requires_outlets: bool
+    requires_accessibility: bool = False   # BR-08
+    required_tags: Optional[str] = None    # BR-09
 
 
 class AssignmentRequest(BaseModel):
@@ -32,6 +34,8 @@ class RoomResponse(BaseModel):
     status: str
     has_projector: bool
     usable_outlets: int
+    is_accessible: bool   # BR-08
+    tags: Optional[str]   # BR-09
 
 
 class RoomSuggestionResponse(BaseModel):
