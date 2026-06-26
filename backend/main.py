@@ -7,10 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 import schemas
-from infrastructure.database import SessionLocal
+from infrastructure.database import SessionLocal, User
 from infrastructure.repository import (
     AssignmentRepositorySQL,
     RoomRepositorySQL,
+    RoomRequestRepositorySQL,
     TimeBlockRepositorySQL,
 )
 from use_cases.assignment import AssignmentUseCase
@@ -62,6 +63,29 @@ def get_room_repository(db: Session = Depends(get_db)) -> RoomRepositorySQL:
     return RoomRepositorySQL(db)
 
 
+def get_room_request_repository(db: Session = Depends(get_db)) -> RoomRequestRepositorySQL:
+    return RoomRequestRepositorySQL(db)
+
+
+# ==========================================
+# AUTH RESOURCES
+# ==========================================
+
+
+@router.post("/auth/login", response_model=schemas.LoginResponse)
+def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == request.username).first()
+    if not user or user.password != request.password:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    
+    return {
+        "token": f"fake-jwt-token-{user.id}",
+        "role": user.role,
+        "name": user.name,
+        "user_id": user.id
+    }
+
+
 # ==========================================
 # ASSIGNMENT RESOURCES
 # ==========================================
@@ -110,6 +134,13 @@ def list_assignments(
     use_case: DashboardUseCase = Depends(get_dashboard_use_case),
 ):
     return use_case.list_teacher_assignments()
+
+
+@router.get("/requests", response_model=List[schemas.RoomRequestSchema])
+def list_room_requests(
+    repository: RoomRequestRepositorySQL = Depends(get_room_request_repository),
+):
+    return repository.get_pending_requests()
 
 
 # ==========================================

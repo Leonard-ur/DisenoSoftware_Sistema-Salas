@@ -15,6 +15,7 @@ from domain.ports import (
 )
 from infrastructure.database import Assignment as AssignmentModel
 from infrastructure.database import Room as RoomModel
+from infrastructure.database import RoomRequest as RoomRequestModel
 from infrastructure.database import TimeBlock as TimeBlockModel
 from infrastructure.database import User as UserModel
 
@@ -240,3 +241,37 @@ class TimeBlockRepositorySQL(ITimeBlockRepository):
             .all()
         )
         return [_map_time_block(row) for row in rows]
+
+
+class RoomRequestRepositorySQL:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_pending_requests(self) -> List[dict]:
+        """Fetch all pending room requests with teacher names and time block details."""
+        rows = (
+            self.db.query(RoomRequestModel)
+            .filter(RoomRequestModel.status == "PENDIENTE")
+            .order_by(RoomRequestModel.created_at)
+            .all()
+        )
+        
+        results = []
+        for row in rows:
+            block = row.time_block
+            results.append({
+                "id": row.id,
+                "teacher_id": row.teacher_id,
+                "teacher_name": row.teacher.name if row.teacher else "Desconocido",
+                "course_name": row.course_name,
+                "expected_attendance": row.expected_attendance,
+                "requires_projector": row.requires_projector,
+                "requires_outlets": row.requires_outlets,
+                "requires_accessibility": row.requires_accessibility,
+                "time_block_id": row.time_block_id,
+                "time_block_day": block.weekday if block else None,
+                "time_block_start": str(block.start_time)[:5] if block else None,
+                "time_block_end": str(block.end_time)[:5] if block else None,
+                "status": row.status,
+            })
+        return results

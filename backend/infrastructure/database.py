@@ -56,11 +56,15 @@ class User(Base):
     email = Column(String(150), unique=True, nullable=False)
     # DOCENTE / COORDINADOR
     role = Column(String(20), nullable=False)
+    # Simple plaintext auth (upgrade to hashed in production)
+    username = Column(String(50), unique=True, nullable=True)
+    password = Column(String(100), nullable=True)
 
     sections = relationship("Section", back_populates="teacher")
     confirmed_assignments = relationship(
         "Assignment", back_populates="coordinator"
     )
+    room_requests = relationship("RoomRequest", back_populates="teacher")
 
     def __repr__(self) -> str:
         return f"<User {self.name} | {self.role}>"
@@ -127,6 +131,36 @@ class Assignment(Base):
             f"<Assignment section={self.section_id} "
             f"room={self.room_id} block={self.time_block_id}>"
         )
+
+
+class RoomRequest(Base):
+    """A teacher's pending request for a classroom assignment."""
+
+    __tablename__ = "room_requests"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    teacher_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    section_id = Column(Integer, ForeignKey("sections.id"), nullable=True)
+    # Course name shown in the UI
+    course_name = Column(String(150), nullable=False)
+    # Expected number of students
+    expected_attendance = Column(Integer, nullable=False)
+    # Boolean requirements
+    requires_projector = Column(Boolean, nullable=False, default=False)
+    requires_outlets = Column(Boolean, nullable=False, default=False)
+    requires_accessibility = Column(Boolean, nullable=False, default=False)
+    # Preferred time block (optional)
+    time_block_id = Column(Integer, ForeignKey("time_blocks.id"), nullable=True)
+    # PENDIENTE | CONFIRMADA | RECHAZADA
+    status = Column(String(20), nullable=False, default="PENDIENTE")
+    created_at = Column(DateTime, nullable=False, default=_utc_now)
+
+    teacher = relationship("User", back_populates="room_requests")
+    section = relationship("Section")
+    time_block = relationship("TimeBlock")
+
+    def __repr__(self) -> str:
+        return f"<RoomRequest #{self.id} | {self.course_name} | {self.status}>"
 
 
 def init_db() -> None:

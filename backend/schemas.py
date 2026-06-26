@@ -1,6 +1,48 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
+
+
+# ==========================================
+# AUTH
+# ==========================================
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    token: str
+    role: str
+    name: str
+    user_id: int
+
+
+# ==========================================
+# ROOM REQUESTS (solicitudes de docentes)
+# ==========================================
+
+
+class RoomRequestSchema(BaseModel):
+    """A pending room request made by a teacher."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    teacher_id: int
+    teacher_name: str
+    course_name: str
+    expected_attendance: int
+    requires_projector: bool
+    requires_outlets: bool
+    requires_accessibility: bool
+    time_block_id: Optional[int]
+    time_block_day: Optional[str]
+    time_block_start: Optional[str]
+    time_block_end: Optional[str]
+    status: str
 
 
 class RoomSuggestionRequest(BaseModel):

@@ -17,6 +17,7 @@ from datetime import datetime, time, timezone  # noqa: E402
 from infrastructure.database import (  # noqa: E402
     Assignment,
     Room,
+    RoomRequest,
     Section,
     SessionLocal,
     TimeBlock,
@@ -56,11 +57,11 @@ TIME_RANGES = [
     (time(15, 45), time(17, 15)),
 ]
 
-# (name, email, role)
+# (name, email, role, username, password)
 USERS = [
-    ("Marta Gómez", "mgomez@uct.cl", "COORDINADOR"),
-    ("Dr. Roberto Silva", "rsilva@uct.cl", "DOCENTE"),
-    ("Dra. Ana Torres", "atorres@uct.cl", "DOCENTE"),
+    ("Marta Gómez",       "mgomez@uct.cl",  "COORDINADOR", "coordinador", "coord123"),
+    ("Dr. Roberto Silva",  "rsilva@uct.cl",  "DOCENTE",     "rsilva",      "docente123"),
+    ("Dra. Ana Torres",    "atorres@uct.cl", "DOCENTE",     "atorres",     "docente123"),
 ]
 
 # (code, enrolled_count, requires_projector, requires_outlets, teacher_idx)
@@ -75,6 +76,13 @@ SAMPLE_ASSIGNMENTS = [
     (0, 0, 0),
     (1, 2, 1),
     (2, 4, 5),
+]
+
+# Pending room requests: (teacher_idx_in_docentes, course_name, attendance, projector, outlets, accessibility, time_block_idx)
+SAMPLE_REQUESTS = [
+    (0, "Arquitectura de Software",  45, True,  False, True,  3),
+    (0, "Bases de Datos Avanzadas",  30, False, True,  False, 7),
+    (1, "Programación Orientada a Objetos", 22, True, True, False, 12),
 ]
 
 # ──────────────────────────────────────────────
@@ -119,8 +127,8 @@ def seed_users(db):
         print("  [SKIP] Users already exist.")
         return
     db.add_all(
-        User(name=name, email=email, role=role)
-        for name, email, role in USERS
+        User(name=name, email=email, role=role, username=username, password=password)
+        for name, email, role, username, password in USERS
     )
     db.flush()
     print(f"  [OK]   {len(USERS)} users inserted.")
@@ -205,6 +213,39 @@ def _indices_in_range(section_i, room_i, block_i, sections, rooms, blocks):
     )
 
 
+def seed_requests(db):
+    if db.query(RoomRequest).count() > 0:
+        print("  [SKIP] Room requests already exist.")
+        return
+    teachers = (
+        db.query(User)
+        .filter(User.role == "DOCENTE")
+        .order_by(User.id)
+        .all()
+    )
+    blocks = db.query(TimeBlock).all()
+    if not teachers:
+        print("  [WARN] No teachers found; requests skipped.")
+        return
+    items = []
+    for teacher_i, course, attendance, proj, outlets, access, block_i in SAMPLE_REQUESTS:
+        teacher = teachers[min(teacher_i, len(teachers) - 1)]
+        block = blocks[block_i] if block_i < len(blocks) else None
+        items.append(RoomRequest(
+            teacher_id=teacher.id,
+            course_name=course,
+            expected_attendance=attendance,
+            requires_projector=proj,
+            requires_outlets=outlets,
+            requires_accessibility=access,
+            time_block_id=block.id if block else None,
+            status="PENDIENTE",
+        ))
+    db.add_all(items)
+    db.flush()
+    print(f"  [OK]   {len(items)} room requests inserted.")
+
+
 # ──────────────────────────────────────────────
 # MAIN
 # ──────────────────────────────────────────────
@@ -223,6 +264,7 @@ def run():
         seed_users(db)
         seed_sections(db)
         seed_assignments(db)
+        seed_requests(db)
         db.commit()
         _print_success()
     except Exception:

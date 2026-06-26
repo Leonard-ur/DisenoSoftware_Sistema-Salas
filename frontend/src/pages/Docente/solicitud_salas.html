@@ -1,0 +1,107 @@
+<!-- Parcial: formulario de solicitud de sala -->
+<!-- Cargado por el router cuando se hace click en "Solicitud de Salas" -->
+<!-- Después de cargar, el router ejecuta inicializarFormularioDocente() -->
+
+<div class="space-y-6 max-w-2xl">
+
+    <div>
+        <h2 class="text-2xl font-semibold text-zinc-100">Solicitud de Sala</h2>
+        <p class="text-zinc-400 text-sm mt-1">Complete el formulario para solicitar un espacio. El coordinador evaluará su requerimiento.</p>
+    </div>
+
+    <!-- Mensaje de resultado (oculto por defecto) -->
+    <div id="mensajeResultado" class="hidden"></div>
+
+    <form id="formularioSala" class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-5">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Curso -->
+            <div class="flex flex-col gap-1.5">
+                <label for="curso" class="text-sm font-medium text-zinc-300">Curso / Asignatura</label>
+                <input type="text" id="curso" name="curso" placeholder="Ej: Arquitectura de Software"
+                    class="px-3 py-2 bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-colors"
+                    required>
+            </div>
+
+            <!-- Aforo esperado -->
+            <div class="flex flex-col gap-1.5">
+                <label for="aforo" class="text-sm font-medium text-zinc-300">Aforo esperado</label>
+                <input type="number" id="aforo" name="aforo" placeholder="Ej: 35" min="1" max="300"
+                    class="px-3 py-2 bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-colors"
+                    required>
+            </div>
+
+            <!-- Día -->
+            <div class="flex flex-col gap-1.5">
+                <label for="dia" class="text-sm font-medium text-zinc-300">Día</label>
+                <select id="dia" name="dia"
+                    class="px-3 py-2 bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-colors"
+                    required>
+                    <option value="">Seleccionar día</option>
+                    <option value="LUNES">Lunes</option>
+                    <option value="MARTES">Martes</option>
+                    <option value="MIERCOLES">Miércoles</option>
+                    <option value="JUEVES">Jueves</option>
+                    <option value="VIERNES">Viernes</option>
+                </select>
+            </div>
+
+            <!-- Bloque horario -->
+            <div class="flex flex-col gap-1.5">
+                <label for="bloque" class="text-sm font-medium text-zinc-300">Bloque horario</label>
+                <select id="bloque" name="bloque"
+                    class="px-3 py-2 bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-colors"
+                    required>
+                    <option value="">Seleccionar bloque</option>
+                    <option value="1">08:00 – 09:30</option>
+                    <option value="2">09:45 – 11:15</option>
+                    <option value="3">11:30 – 13:00</option>
+                    <option value="4">14:00 – 15:30</option>
+                    <option value="5">15:45 – 17:15</option>
+                    <option value="6">17:30 – 19:00</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Requerimientos adicionales -->
+        <div class="space-y-3">
+            <p class="text-sm font-medium text-zinc-300">Requerimientos adicionales</p>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="proyector" name="proyector"
+                    class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-zinc-100 focus:ring-zinc-500">
+                <span class="text-sm text-zinc-400 flex items-center gap-2">
+                    <i data-lucide="projector" class="w-4 h-4"></i> Requiere proyector
+                </span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="enchufes" name="enchufes"
+                    class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-zinc-100 focus:ring-zinc-500">
+                <span class="text-sm text-zinc-400 flex items-center gap-2">
+                    <i data-lucide="plug" class="w-4 h-4"></i> Requiere enchufes usables
+                </span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="accesibilidad" name="accesibilidad"
+                    class="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-zinc-100 focus:ring-zinc-500">
+                <span class="text-sm text-zinc-400 flex items-center gap-2">
+                    <i data-lucide="wheelchair" class="w-4 h-4"></i> Accesibilidad universal
+                </span>
+            </label>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="flex flex-col gap-1.5">
+            <label for="observaciones" class="text-sm font-medium text-zinc-300">Observaciones (opcional)</label>
+            <textarea id="observaciones" name="observaciones" rows="3"
+                placeholder="Cualquier requerimiento especial adicional..."
+                class="px-3 py-2 bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-colors resize-none"></textarea>
+        </div>
+
+        <button id="btnEnviar" type="submit"
+            class="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-medium py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            Enviar Solicitud
+        </button>
+    </form>
+
+</div>

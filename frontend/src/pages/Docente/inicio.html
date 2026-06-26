@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Docente | UCT - Asignación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- FIX: Lucide estaba cargado dos veces (líneas 11 y 114). Se elimina el duplicado -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-950 text-zinc-300 flex h-screen overflow-hidden">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col hidden md:flex z-20">
+        <div class="p-6 flex items-center border-b border-zinc-800">
+            <div class="text-xl font-semibold text-zinc-100 flex items-center gap-2">
+                <i data-lucide="library" class="w-5 h-5 text-zinc-400"></i>
+                UCT<span class="font-normal text-zinc-500">Docente</span>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-1" id="nav-profesor">
+            <a href="#" data-target="view-inicio"
+                class="flex items-center gap-3 px-3 py-2 bg-zinc-800 text-zinc-100 rounded-lg font-medium transition-colors">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Inicio
+            </a>
+            <a href="#" data-target="view-solicitud"
+                class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded-lg transition-colors">
+                <i data-lucide="calendar-plus" class="w-4 h-4"></i> Solicitud de Salas
+            </a>
+            <a href="#" data-target="view-cursos"
+                class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded-lg transition-colors">
+                <i data-lucide="book-open" class="w-4 h-4"></i> Mis Cursos
+            </a>
+            <a href="#" data-target="view-mis-solicitudes"
+                class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded-lg transition-colors">
+                <i data-lucide="history" class="w-4 h-4"></i> Mis Solicitudes
+            </a>
+        </nav>
+        <div class="p-4 border-t border-zinc-800">
+            <a href="#" id="btn-logout" class="flex items-center gap-3 px-3 py-2 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="flex-1 flex flex-col overflow-y-auto relative bg-gray-950">
+        <header class="bg-gray-950/80 backdrop-blur-md border-b border-zinc-800 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-lg font-medium text-zinc-100" id="header-title">Inicio</h1>
+            <div class="flex items-center gap-4 border-l border-zinc-800 pl-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-medium text-zinc-200">Dr. Roberto Silva</p>
+                    <p class="text-xs text-zinc-500">Facultad de Ingeniería</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium text-zinc-300 border border-zinc-700">
+                    RS
+                </div>
+            </div>
+        </header>
+
+        <!-- FIX: Se reemplazó el contenido embebido por contenedor-principal igual que coord.html.
+             El router inyecta aquí los parciales HTML de la carpeta Docente/ -->
+        <div id="contenedor-principal" class="p-8 max-w-5xl mx-auto w-full flex-1"></div>
+
+        <!-- Modal Confirmación Cerrar Sesión -->
+        <div id="modalLogout"
+            class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+                <div class="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="log-out" class="w-6 h-6 text-rose-500"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-zinc-100 mb-2">¿Cerrar sesión?</h3>
+                <p class="text-sm text-zinc-400 mb-6">¿Estás seguro que deseas salir del sistema?</p>
+                <div class="flex gap-3 justify-center">
+                    <button id="btnCancelarLogout" class="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors flex-1">
+                        Cancelar
+                    </button>
+                    <button id="btnConfirmarLogout" class="px-4 py-2 text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 rounded-lg transition-colors flex-1">
+                        Sí, salir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        // FIX: Las rutas eran './src/services/...' y '../src/services/...' (ambas incorrectas).
+        // La ruta correcta relativa a esta página (src/pages/Docente/) es '../../services/...'
+        import { cargarInicioProfesor, cargarMisSolicitudes, inicializarFormularioDocente } from '../../services/docente.js';
+        import { initRouter } from '../../services/router.js';
+        import { authService } from '../../services/authService.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+
+            // Mapa: data-target → archivo HTML parcial (relativo a esta página: src/pages/Docente/)
+            const rutas = {
+                'view-inicio':          'dashboard.html',
+                'view-solicitud':       'solicitud_salas.html',
+                'view-cursos':          'mis_cursos.html',
+                'view-mis-solicitudes': 'mis_solicitudes.html'
+            };
+
+            // Mapa: data-target → función a ejecutar DESPUÉS de cargar el parcial
+            const callbacks = {
+                'view-inicio':          cargarInicioProfesor,
+                'view-mis-solicitudes': cargarMisSolicitudes,
+                'view-solicitud':       inicializarFormularioDocente
+            };
+
+            initRouter(rutas, callbacks);
+
+            // Lógica Cerrar Sesión
+            const btnLogout = document.getElementById('btn-logout');
+            const modalLogout = document.getElementById('modalLogout');
+            const btnCancelarLogout = document.getElementById('btnCancelarLogout');
+            const btnConfirmarLogout = document.getElementById('btnConfirmarLogout');
+
+            if (btnLogout) {
+                btnLogout.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    modalLogout.classList.remove('hidden');
+                });
+            }
+
+            if (btnCancelarLogout) {
+                btnCancelarLogout.addEventListener('click', () => {
+                    modalLogout.classList.add('hidden');
+                });
+            }
+
+            if (btnConfirmarLogout) {
+                btnConfirmarLogout.addEventListener('click', () => {
+                    authService.logout();
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>
