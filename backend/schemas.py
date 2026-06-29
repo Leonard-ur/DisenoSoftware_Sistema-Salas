@@ -1,3 +1,5 @@
+# backend/schemas.py
+
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -21,14 +23,50 @@ class LoginResponse(BaseModel):
 
 
 # ==========================================
+# ROOMS
+# ==========================================
+
+
+class RoomResponse(BaseModel):
+    """Full representation of a room."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str
+    capacity: int
+    status: str
+    has_projector: bool
+    usable_outlets: int
+    is_accessible: bool
+    tags: Optional[str]
+
+
+# ==========================================
 # ROOM REQUESTS (solicitudes de docentes)
 # ==========================================
 
 
-class RoomRequestSchema(BaseModel):
-    """A pending room request made by a teacher."""
+class RoomRequestCreate(BaseModel):
+    """Payload that a teacher sends to create a room request."""
 
-    model_config = ConfigDict(from_attributes=True)
+    teacher_id: int
+    course_name: str
+    expected_attendance: int
+    requires_projector: bool = False
+    requires_outlets: bool = False
+    requires_accessibility: bool = False
+    time_block_id: Optional[int] = None
+
+
+class RoomRequestStatusUpdate(BaseModel):
+    """Payload that a coordinator sends to approve or reject a request."""
+
+    status: str   # APROBADA | RECHAZADA
+
+
+class RoomRequestResponse(BaseModel):
+    """Full detail of a room request, including teacher and block info."""
 
     id: int
     teacher_id: int
@@ -43,15 +81,42 @@ class RoomRequestSchema(BaseModel):
     time_block_start: Optional[str]
     time_block_end: Optional[str]
     status: str
+    created_at: Optional[str]
+
+
+# kept for backwards compatibility with existing frontend
+RoomRequestSchema = RoomRequestResponse
+
+
+# ==========================================
+# ROOM SUGGESTIONS (motor de búsqueda)
+# ==========================================
 
 
 class RoomSuggestionRequest(BaseModel):
-    """Requirements sent by the user to search for a room."""
+    """
+    Requirements sent by a teacher to search for a matching room.
+    The engine filters by availability, capacity and equipment.
+    """
 
     time_block_id: int
     expected_attendance: int
-    requires_projector: bool
-    requires_outlets: bool
+    requires_projector: bool = False
+    requires_outlets: bool = False
+    requires_accessibility: bool = False
+    tags: Optional[str] = None
+
+
+class RoomSuggestionResponse(BaseModel):
+    """Response holding the list of recommended rooms."""
+
+    message: str
+    suggested_rooms: List[RoomResponse]
+
+
+# ==========================================
+# ASSIGNMENTS
+# ==========================================
 
 
 class AssignmentRequest(BaseModel):
@@ -61,26 +126,6 @@ class AssignmentRequest(BaseModel):
     room_id: int
     time_block_id: int
     coordinator_id: int
-
-
-class RoomResponse(BaseModel):
-    """Basic representation of a room."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    code: str
-    capacity: int
-    status: str
-    has_projector: bool
-    usable_outlets: int
-
-
-class RoomSuggestionResponse(BaseModel):
-    """Response holding the list of recommended rooms."""
-
-    message: str
-    suggested_rooms: List[RoomResponse]
 
 
 class AssignmentResponse(BaseModel):
@@ -107,6 +152,11 @@ class AssignmentDetailResponse(BaseModel):
     time_block_end: str
     status: str
     created_at: str
+
+
+# ==========================================
+# TIME BLOCKS
+# ==========================================
 
 
 class TimeBlockResponse(BaseModel):

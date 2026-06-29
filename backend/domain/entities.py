@@ -58,6 +58,21 @@ class Room:
 
 
 @dataclass
+class RoomRequest:
+    id: Optional[int]
+    teacher_id: int
+    course_name: str
+    expected_attendance: int
+    requires_projector: bool
+    requires_outlets: bool
+    requires_accessibility: bool
+    time_block_id: Optional[int]
+    # PENDIENTE | APROBADA | RECHAZADA
+    status: str = "PENDIENTE"
+    created_at: Optional[datetime] = None
+
+
+@dataclass
 class Section:
     id: Optional[int]
     code: str

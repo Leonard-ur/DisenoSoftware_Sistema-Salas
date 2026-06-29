@@ -35,15 +35,10 @@ class Room(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String(20), unique=True, nullable=False)
     capacity = Column(Integer, nullable=False)
-    # Three possible values: DISPONIBLE / ASIGNADA / MANTENIMIENTO
     status = Column(String(20), nullable=False, default="DISPONIBLE")
-    # True = working projector / False = broken or none
     has_projector = Column(Boolean, nullable=False, default=False)
-    # Number of working power outlets
     usable_outlets = Column(Integer, nullable=False, default=0)
-    # True = room meets universal accessibility standards
     is_accessible = Column(Boolean, default=False)
-    # Optional category tags (e.g. "computacion", "laboratorio")
     tags = Column(String(100), nullable=True)
 
     assignments = relationship("Assignment", back_populates="room")
@@ -52,19 +47,46 @@ class Room(Base):
         return f"<Room {self.code} | cap={self.capacity} | {self.status}>"
 
 
+class RoomRequest(Base):
+    __tablename__ = "room_requests"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    teacher_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    course_name = Column(String(100), nullable=False)
+    expected_attendance = Column(Integer, nullable=False)
+    requires_projector = Column(Boolean, nullable=False, default=False)
+    requires_outlets = Column(Boolean, nullable=False, default=False)
+    requires_accessibility = Column(Boolean, nullable=False, default=False)
+    time_block_id = Column(
+        Integer, ForeignKey("time_blocks.id"), nullable=True
+    )
+    # PENDIENTE | APROBADA | RECHAZADA
+    status = Column(String(20), nullable=False, default="PENDIENTE")
+    created_at = Column(DateTime, nullable=False, default=_utc_now)
+
+    teacher = relationship("User", back_populates="room_requests")
+    time_block = relationship("TimeBlock", back_populates="room_requests")
+
+    def __repr__(self) -> str:
+        return (
+            f"<RoomRequest teacher={self.teacher_id} "
+            f"course={self.course_name} | {self.status}>"
+        )
+
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(150), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
-    # DOCENTE / COORDINADOR
     role = Column(String(20), nullable=False)
 
     sections = relationship("Section", back_populates="teacher")
     confirmed_assignments = relationship(
         "Assignment", back_populates="coordinator"
     )
+    room_requests = relationship("RoomRequest", back_populates="teacher")
 
     def __repr__(self) -> str:
         return f"<User {self.name} | {self.role}>"
@@ -74,7 +96,6 @@ class Section(Base):
     __tablename__ = "sections"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    # e.g. INFO1156-2-2026-1
     code = Column(String(30), unique=True, nullable=False)
     enrolled_count = Column(Integer, nullable=False)
     requires_projector = Column(Boolean, nullable=False, default=False)
@@ -97,6 +118,7 @@ class TimeBlock(Base):
     end_time = Column(Time, nullable=False)
 
     assignments = relationship("Assignment", back_populates="time_block")
+    room_requests = relationship("RoomRequest", back_populates="time_block")
 
     def __repr__(self) -> str:
         return f"<TimeBlock {self.weekday} {self.start_time}-{self.end_time}>"
@@ -111,12 +133,10 @@ class Assignment(Base):
     time_block_id = Column(
         Integer, ForeignKey("time_blocks.id"), nullable=False
     )
-    # CONFIRMADA | LIBERADA
     status = Column(String(20), nullable=False, default="CONFIRMADA")
     confirmed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, nullable=False, default=_utc_now)
 
-    # Prevents booking the same room in the same time block twice.
     __table_args__ = (
         UniqueConstraint("room_id", "time_block_id", name="uq_room_time_block"),
     )
