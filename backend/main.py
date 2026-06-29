@@ -77,7 +77,7 @@ def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == request.username).first()
     if not user or user.password != request.password:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
-    
+
     return {
         "token": f"fake-jwt-token-{user.id}",
         "role": user.role,
