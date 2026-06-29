@@ -161,7 +161,7 @@ def _build_section(row, teachers):
 def seed_assignments(db):
     if db.query(Assignment).count() > 0:
         print("  [SKIP] Assignments already exist.")
-        return  
+        return
     coordinator = db.query(User).filter(User.role == "COORDINADOR").first()
     sections = db.query(Section).all()
     rooms = (
