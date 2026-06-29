@@ -17,7 +17,6 @@ from datetime import datetime, time, timezone  # noqa: E402
 from infrastructure.database import (  # noqa: E402
     Assignment,
     Room,
-    RoomRequest,
     Section,
     SessionLocal,
     TimeBlock,
@@ -29,23 +28,23 @@ from infrastructure.database import (  # noqa: E402
 # TEST DATA
 # ──────────────────────────────────────────────
 
-# (code, capacity, status, has_projector, usable_outlets)
+# (code, capacity, status, has_projector, usable_outlets, is_accessible, tags)
 ROOMS = [
-    ("A-101", 20, "DISPONIBLE", True, 0),
-    ("A-102", 25, "DISPONIBLE", False, 4),
-    ("A-103", 30, "MANTENIMIENTO", False, 0),
-    ("A-201", 35, "DISPONIBLE", True, 8),
-    ("A-202", 40, "DISPONIBLE", True, 6),
-    ("A-203", 45, "DISPONIBLE", True, 10),
-    ("B-101", 22, "DISPONIBLE", False, 0),
-    ("B-102", 28, "DISPONIBLE", True, 2),
-    ("B-103", 33, "MANTENIMIENTO", False, 0),
-    ("B-201", 38, "DISPONIBLE", True, 12),
-    ("B-202", 42, "DISPONIBLE", False, 5),
-    ("C-101", 24, "DISPONIBLE", True, 0),
-    ("C-102", 31, "DISPONIBLE", False, 8),
-    ("C-201", 37, "DISPONIBLE", True, 6),
-    ("C-202", 45, "MANTENIMIENTO", True, 4),
+    ("A-101", 20, "DISPONIBLE",    True,  0,  True,  None),
+    ("A-102", 25, "DISPONIBLE",    False, 4,  False, "computacion"),
+    ("A-103", 30, "MANTENIMIENTO", False, 0,  False, None),
+    ("A-201", 35, "DISPONIBLE",    True,  8,  True,  None),
+    ("A-202", 40, "DISPONIBLE",    True,  6,  False, "computacion"),
+    ("A-203", 45, "DISPONIBLE",    True,  10, True,  "computacion"),
+    ("B-101", 22, "DISPONIBLE",    False, 0,  False, None),
+    ("B-102", 28, "DISPONIBLE",    True,  2,  True,  None),
+    ("B-103", 33, "MANTENIMIENTO", False, 0,  False, None),
+    ("B-201", 38, "DISPONIBLE",    True,  12, True,  "computacion"),
+    ("B-202", 42, "DISPONIBLE",    False, 5,  False, None),
+    ("C-101", 24, "DISPONIBLE",    True,  0,  False, None),
+    ("C-102", 31, "DISPONIBLE",    False, 8,  True,  "computacion"),
+    ("C-201", 37, "DISPONIBLE",    True,  6,  False, None),
+    ("C-202", 45, "MANTENIMIENTO", True,  4,  False, None),
 ]
 
 # Monday to Friday, 4 blocks per day (weekday values stay in Spanish).
@@ -57,11 +56,11 @@ TIME_RANGES = [
     (time(15, 45), time(17, 15)),
 ]
 
-# (name, email, role, username, password)
+# (name, email, role)
 USERS = [
-    ("Marta Gómez",       "mgomez@uct.cl",  "COORDINADOR", "coordinador", "coord123"),
-    ("Dr. Roberto Silva",  "rsilva@uct.cl",  "DOCENTE",     "rsilva",      "docente123"),
-    ("Dra. Ana Torres",    "atorres@uct.cl", "DOCENTE",     "atorres",     "docente123"),
+    ("Marta Gómez", "mgomez@uct.cl", "COORDINADOR"),
+    ("Dr. Roberto Silva", "rsilva@uct.cl", "DOCENTE"),
+    ("Dra. Ana Torres", "atorres@uct.cl", "DOCENTE"),
 ]
 
 # (code, enrolled_count, requires_projector, requires_outlets, teacher_idx)
@@ -76,13 +75,6 @@ SAMPLE_ASSIGNMENTS = [
     (0, 0, 0),
     (1, 2, 1),
     (2, 4, 5),
-]
-
-# Pending room requests: (teacher_idx_in_docentes, course_name, attendance, projector, outlets, accessibility, time_block_idx)
-SAMPLE_REQUESTS = [
-    (0, "Arquitectura de Software",  45, True,  False, True,  3),
-    (0, "Bases de Datos Avanzadas",  30, False, True,  False, 7),
-    (1, "Programación Orientada a Objetos", 22, True, True, False, 12),
 ]
 
 # ──────────────────────────────────────────────
@@ -101,8 +93,10 @@ def seed_rooms(db):
             status=status,
             has_projector=has_projector,
             usable_outlets=usable_outlets,
+            is_accessible=is_accessible,
+            tags=tags,
         )
-        for code, capacity, status, has_projector, usable_outlets in ROOMS
+        for code, capacity, status, has_projector, usable_outlets, is_accessible, tags in ROOMS
     )
     db.flush()
     print(f"  [OK]   {len(ROOMS)} rooms inserted.")
@@ -127,8 +121,8 @@ def seed_users(db):
         print("  [SKIP] Users already exist.")
         return
     db.add_all(
-        User(name=name, email=email, role=role, username=username, password=password)
-        for name, email, role, username, password in USERS
+        User(name=name, email=email, role=role)
+        for name, email, role in USERS
     )
     db.flush()
     print(f"  [OK]   {len(USERS)} users inserted.")
@@ -213,39 +207,6 @@ def _indices_in_range(section_i, room_i, block_i, sections, rooms, blocks):
     )
 
 
-def seed_requests(db):
-    if db.query(RoomRequest).count() > 0:
-        print("  [SKIP] Room requests already exist.")
-        return
-    teachers = (
-        db.query(User)
-        .filter(User.role == "DOCENTE")
-        .order_by(User.id)
-        .all()
-    )
-    blocks = db.query(TimeBlock).all()
-    if not teachers:
-        print("  [WARN] No teachers found; requests skipped.")
-        return
-    items = []
-    for teacher_i, course, attendance, proj, outlets, access, block_i in SAMPLE_REQUESTS:
-        teacher = teachers[min(teacher_i, len(teachers) - 1)]
-        block = blocks[block_i] if block_i < len(blocks) else None
-        items.append(RoomRequest(
-            teacher_id=teacher.id,
-            course_name=course,
-            expected_attendance=attendance,
-            requires_projector=proj,
-            requires_outlets=outlets,
-            requires_accessibility=access,
-            time_block_id=block.id if block else None,
-            status="PENDIENTE",
-        ))
-    db.add_all(items)
-    db.flush()
-    print(f"  [OK]   {len(items)} room requests inserted.")
-
-
 # ──────────────────────────────────────────────
 # MAIN
 # ──────────────────────────────────────────────
@@ -264,7 +225,6 @@ def run():
         seed_users(db)
         seed_sections(db)
         seed_assignments(db)
-        seed_requests(db)
         db.commit()
         _print_success()
     except Exception:

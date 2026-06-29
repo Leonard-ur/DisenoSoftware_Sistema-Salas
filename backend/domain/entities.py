@@ -14,6 +14,8 @@ class Room:
     status: str
     has_projector: bool
     usable_outlets: int
+    is_accessible: bool = False
+    tags: Optional[str] = None
 
     def is_available(self) -> bool:
         """Return True when the room is neither under maintenance nor assigned."""
