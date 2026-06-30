@@ -1,6 +1,6 @@
 # use_cases/assignment.py
 
-from typing import List, Optional
+from typing import List
 
 from domain.entities import Assignment, Room
 from domain.ports import (

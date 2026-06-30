@@ -97,8 +97,6 @@ RoomRequestSchema = RoomRequestResponse
 # ==========================================
 
 
-
-
 class RoomSuggestionResponse(BaseModel):
     """Response holding the list of recommended rooms."""
 

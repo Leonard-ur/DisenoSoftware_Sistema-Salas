@@ -315,7 +315,7 @@ def create_room_suggestions(
         requires_projector=request.requires_projector,
         requires_outlets=request.requires_outlets,
         requires_accessibility=request.requires_accessibility,
-        tags=request.tags,
+        required_tags=request.required_tags,
     )
     if not rooms:
         return {
