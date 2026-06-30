@@ -1,7 +1,9 @@
 # infrastructure/database.py
 
+import os
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
 from sqlalchemy import (
     Boolean,
     Column,
@@ -15,11 +17,28 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-DATABASE_URL = "sqlite:///./salas.db"
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
+# Carga las variables del archivo .env (si existe) al entorno del proceso.
+load_dotenv()
+
+# ──────────────────────────────────────────────
+# CONFIGURACIÓN DE CONEXIÓN (PostgreSQL)
+# ──────────────────────────────────────────────
+# Se arma a partir de variables de entorno individuales, pero si defines
+# DATABASE_URL directamente en el .env, esa tiene prioridad sobre las demás.
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "salas_db")
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
 )
+
+# pool_pre_ping evita errores por conexiones "muertas" cuando Postgres
+# cierra conexiones inactivas (timeout) sin que SQLAlchemy se entere.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
@@ -160,4 +179,4 @@ def init_db() -> None:
 
 if __name__ == "__main__":
     init_db()
-    print("Database created: salas.db")
+    print(f"Database created/verified on: {DB_HOST}:{DB_PORT}/{DB_NAME}")
