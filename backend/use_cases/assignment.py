@@ -31,13 +31,8 @@ class AssignmentUseCase:
         expected_attendance: int,
         requires_projector: bool,
         requires_outlets: bool,
-<<<<<<< HEAD
         requires_accessibility: bool = False,   # BR-08
         required_tags: str | None = None,       # BR-09
-=======
-        requires_accessibility: bool = False,
-        tags: Optional[str] = None,
->>>>>>> origin/integration
     ) -> List[Room]:
         """
         FR-04 (Optimal suggestion): evaluate the operational rooms and return
@@ -54,11 +49,7 @@ class AssignmentUseCase:
                 requires_projector,
                 requires_outlets,
                 requires_accessibility,
-<<<<<<< HEAD
                 required_tags,
-=======
-                tags,
->>>>>>> origin/integration
             )
         ]
         return sorted(
@@ -73,13 +64,8 @@ class AssignmentUseCase:
         expected_attendance: int,
         requires_projector: bool,
         requires_outlets: bool,
-<<<<<<< HEAD
         requires_accessibility: bool = False,   # BR-08
         required_tags: str | None = None,       # BR-09
-=======
-        requires_accessibility: bool,
-        tags: Optional[str],
->>>>>>> origin/integration
     ) -> bool:
         """
         Check the immutable business rules for a single room:
@@ -97,8 +83,6 @@ class AssignmentUseCase:
         ):
             return False
         if requires_accessibility and not room.is_accessible:
-            return False
-        if tags and (not room.tags or tags.lower() not in room.tags.lower()):
             return False
         free_block_ids = {
             block.id
