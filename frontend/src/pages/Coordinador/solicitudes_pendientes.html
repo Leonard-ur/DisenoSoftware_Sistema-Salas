@@ -1,0 +1,28 @@
+<div class="mb-6 flex justify-between items-end">
+    <div>
+        <h2 class="text-2xl font-semibold text-zinc-100">Solicitudes Pendientes</h2>
+        <p class="text-zinc-400 mt-1 text-sm">Gestione los requerimientos de espacios físicos de los docentes.</p>
+    </div>
+</div>
+
+<div class="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden shadow-sm">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-zinc-950/50 border-b border-zinc-800 text-zinc-400 text-xs uppercase tracking-wider">
+                <th class="px-6 py-4 font-medium">ID</th>
+                <th class="px-6 py-4 font-medium">Docente</th>
+                <th class="px-6 py-4 font-medium">Curso / Aforo</th>
+                <th class="px-6 py-4 font-medium">Horario</th>
+                <th class="px-6 py-4 font-medium text-right">Acción</th>
+            </tr>
+        </thead>
+        <tbody id="tbody-solicitudes" class="divide-y divide-zinc-800">
+            <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-zinc-500">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3 text-zinc-600"></i>
+                    Cargando solicitudes...
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

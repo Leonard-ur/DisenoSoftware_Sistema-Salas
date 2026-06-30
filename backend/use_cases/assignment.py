@@ -1,6 +1,6 @@
 # use_cases/assignment.py
 
-from typing import List
+from typing import List, Optional
 
 from domain.entities import Assignment, Room
 from domain.ports import (
@@ -31,12 +31,18 @@ class AssignmentUseCase:
         expected_attendance: int,
         requires_projector: bool,
         requires_outlets: bool,
+<<<<<<< HEAD
         requires_accessibility: bool = False,   # BR-08
         required_tags: str | None = None,       # BR-09
+=======
+        requires_accessibility: bool = False,
+        tags: Optional[str] = None,
+>>>>>>> origin/integration
     ) -> List[Room]:
         """
         FR-04 (Optimal suggestion): evaluate the operational rooms and return
         the eligible ones sorted by efficiency (least wasted space first).
+        Filters by capacity, equipment, accessibility, tag and time block.
         """
         candidates = [
             room
@@ -48,7 +54,11 @@ class AssignmentUseCase:
                 requires_projector,
                 requires_outlets,
                 requires_accessibility,
+<<<<<<< HEAD
                 required_tags,
+=======
+                tags,
+>>>>>>> origin/integration
             )
         ]
         return sorted(
@@ -63,14 +73,20 @@ class AssignmentUseCase:
         expected_attendance: int,
         requires_projector: bool,
         requires_outlets: bool,
+<<<<<<< HEAD
         requires_accessibility: bool = False,   # BR-08
         required_tags: str | None = None,       # BR-09
+=======
+        requires_accessibility: bool,
+        tags: Optional[str],
+>>>>>>> origin/integration
     ) -> bool:
         """
         Check the immutable business rules for a single room:
         - BR-01 (Capacity), BR-03 (Equipment), BR-08 (Accessibility),
           BR-09 (Lab affinity) — all delegated to the entity.
         - BR-02 (Overlap): the room must be free in the requested time block.
+        - Accessibility and tag filters when requested.
         """
         if not room.meets_requirements(
             expected_attendance,
@@ -79,6 +95,10 @@ class AssignmentUseCase:
             requires_accessibility=requires_accessibility,
             required_tags=required_tags,
         ):
+            return False
+        if requires_accessibility and not room.is_accessible:
+            return False
+        if tags and (not room.tags or tags.lower() not in room.tags.lower()):
             return False
         free_block_ids = {
             block.id

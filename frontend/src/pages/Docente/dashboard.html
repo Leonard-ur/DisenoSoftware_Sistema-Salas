@@ -1,0 +1,56 @@
+<!-- Parcial: dashboard de inicio del docente -->
+<!-- Cargado por el router cuando se hace click en "Inicio" -->
+
+<div class="space-y-6">
+
+    <div>
+        <h2 class="text-2xl font-semibold text-zinc-100">Bienvenido, Dr. Silva</h2>
+        <p class="text-zinc-400 text-sm mt-1">Aquí tienes el resumen de tu actividad actual.</p>
+    </div>
+
+    <!-- Métricas — los IDs son actualizados por cargarInicioProfesor() -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-zinc-400 mb-2">
+                <i data-lucide="door-open" class="w-4 h-4"></i>
+                <p class="text-sm font-medium">Salas Disponibles</p>
+            </div>
+            <p id="prof-stat-disponibles" class="text-3xl font-semibold text-zinc-100">
+                <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+            </p>
+        </div>
+        <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-emerald-400 mb-2">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <p class="text-sm font-medium">Asignaciones Confirmadas</p>
+            </div>
+            <p id="prof-stat-asignadas" class="text-3xl font-semibold text-emerald-400">
+                <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+            </p>
+        </div>
+        <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-rose-400 mb-2">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+                <p class="text-sm font-medium">Salas en Mantención</p>
+            </div>
+            <p id="prof-stat-mantenimiento" class="text-3xl font-semibold text-rose-400">
+                <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+            </p>
+        </div>
+    </div>
+
+    <!-- CTA: Nueva Solicitud -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <p class="font-medium text-zinc-100">¿Necesita una sala para su próxima clase?</p>
+            <p class="text-zinc-400 text-sm mt-1">Envíe su solicitud y el coordinador le asignará el espacio óptimo.</p>
+        </div>
+        <button
+            onclick="document.querySelector('[data-target=\'view-solicitud\']').click()"
+            class="px-5 py-2.5 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors text-sm whitespace-nowrap flex items-center gap-2">
+            <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+            Nueva Solicitud
+        </button>
+    </div>
+
+</div>
