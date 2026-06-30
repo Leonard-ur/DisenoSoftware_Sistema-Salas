@@ -14,8 +14,8 @@ class Room:
     status: str
     has_projector: bool
     usable_outlets: int
-    is_accessible: bool = False
-    tags: Optional[str] = None
+    is_accessible: bool = False   # BR-08: universal accessibility
+    tags: Optional[str] = None    # BR-09: lab affinity (comma-separated)
 
     def is_available(self) -> bool:
         """Return True when the room is neither under maintenance nor assigned."""
@@ -35,11 +35,15 @@ class Room:
         expected_attendance: int,
         requires_projector: bool,
         requires_outlets: bool,
+        requires_accessibility: bool = False,
+        required_tags: Optional[str] = None,
     ) -> bool:
         """
         Apply the business rules:
         - BR-01 (Capacity): effective capacity >= expected attendance.
         - BR-03 (Equipment): validate projector and outlets when required.
+        - BR-08 (Accessibility): room must be accessible when required.
+        - BR-09 (Lab affinity): room must carry the requested tag.
         """
         if self.effective_capacity() < expected_attendance:
             return False
@@ -47,6 +51,14 @@ class Room:
             return False
         if requires_outlets and self.usable_outlets <= 0:
             return False
+        # BR-08
+        if requires_accessibility and not self.is_accessible:
+            return False
+        # BR-09 — tag lookup is case-insensitive, comma-separated
+        if required_tags:
+            room_tags = {t.strip().lower() for t in (self.tags or "").split(",") if t.strip()}
+            if required_tags.strip().lower() not in room_tags:
+                return False
         return True
 
     def efficiency_score(self, expected_attendance: int) -> int:

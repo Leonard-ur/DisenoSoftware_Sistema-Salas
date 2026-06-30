@@ -1,13 +1,17 @@
-# backend/schemas.py
-
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
-# ==========================================
-# AUTH
-# ==========================================
+class RoomSuggestionRequest(BaseModel):
+    """Requirements sent by the user to search for a room."""
+
+    time_block_id: int
+    expected_attendance: int
+    requires_projector: bool
+    requires_outlets: bool
+    requires_accessibility: bool = False   # BR-08
+    required_tags: Optional[str] = None    # BR-09
 
 
 class LoginRequest(BaseModel):
@@ -93,18 +97,6 @@ RoomRequestSchema = RoomRequestResponse
 # ==========================================
 
 
-class RoomSuggestionRequest(BaseModel):
-    """
-    Requirements sent by a teacher to search for a matching room.
-    The engine filters by availability, capacity and equipment.
-    """
-
-    time_block_id: int
-    expected_attendance: int
-    requires_projector: bool = False
-    requires_outlets: bool = False
-    requires_accessibility: bool = False
-    tags: Optional[str] = None
 
 
 class RoomSuggestionResponse(BaseModel):
