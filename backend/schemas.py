@@ -1,6 +1,7 @@
+from datetime import time
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class RoomSuggestionRequest(BaseModel):
@@ -158,3 +159,11 @@ class TimeBlockResponse(BaseModel):
     weekday: str
     start_time: str
     end_time: str
+
+    @field_validator("start_time", "end_time", mode="before")
+    @classmethod
+    def _format_time(cls, value):
+        """Render datetime.time values as short HH:MM strings."""
+        if isinstance(value, time):
+            return value.strftime("%H:%M")
+        return value
