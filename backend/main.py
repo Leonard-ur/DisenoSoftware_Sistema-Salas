@@ -1,6 +1,6 @@
 # backend/main.py
 
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,9 +50,11 @@ def get_db():
         db.close()
 
 
-def get_assignment_use_case(
-    db: Session = Depends(get_db),
-) -> AssignmentUseCase:
+# Reusable injected DB session (Annotated style required by FastAPI).
+DbSession = Annotated[Session, Depends(get_db)]
+
+
+def get_assignment_use_case(db: DbSession) -> AssignmentUseCase:
     return AssignmentUseCase(
         RoomRepositorySQL(db),
         AssignmentRepositorySQL(db),
@@ -60,26 +62,37 @@ def get_assignment_use_case(
     )
 
 
-def get_dashboard_use_case(
-    db: Session = Depends(get_db),
-) -> DashboardUseCase:
+def get_dashboard_use_case(db: DbSession) -> DashboardUseCase:
     return DashboardUseCase(RoomRepositorySQL(db), AssignmentRepositorySQL(db))
 
 
-def get_room_repository(db: Session = Depends(get_db)) -> RoomRepositorySQL:
+def get_room_repository(db: DbSession) -> RoomRepositorySQL:
     return RoomRepositorySQL(db)
 
 
-def get_room_request_repository(
-    db: Session = Depends(get_db),
-) -> RoomRequestRepositorySQL:
+def get_room_request_repository(db: DbSession) -> RoomRequestRepositorySQL:
     return RoomRequestRepositorySQL(db)
 
 
-def get_time_block_repository(
-    db: Session = Depends(get_db),
-) -> TimeBlockRepositorySQL:
+def get_time_block_repository(db: DbSession) -> TimeBlockRepositorySQL:
     return TimeBlockRepositorySQL(db)
+
+
+# Reusable injected dependencies (declared once, used in every endpoint).
+RoomRepo = Annotated[RoomRepositorySQL, Depends(get_room_repository)]
+RoomRequestRepo = Annotated[
+    RoomRequestRepositorySQL, Depends(get_room_request_repository)
+]
+TimeBlockRepo = Annotated[
+    TimeBlockRepositorySQL, Depends(get_time_block_repository)
+]
+AssignmentUC = Annotated[AssignmentUseCase, Depends(get_assignment_use_case)]
+DashboardUC = Annotated[DashboardUseCase, Depends(get_dashboard_use_case)]
+
+# Reusable OpenAPI error documentation (S8415: document raised HTTPExceptions).
+RESPONSE_400 = {400: {"description": "Solicitud inválida"}}
+RESPONSE_401 = {401: {"description": "Credenciales inválidas"}}
+RESPONSE_404 = {404: {"description": "Recurso no encontrado"}}
 
 
 # ==========================================
@@ -92,8 +105,9 @@ def get_time_block_repository(
     response_model=schemas.LoginResponse,
     tags=["Auth"],
     summary="Iniciar sesión",
+    responses=RESPONSE_401,
 )
-def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
+def login(request: schemas.LoginRequest, db: DbSession):
     """Autentica un usuario (DOCENTE o COORDINADOR) y retorna su rol e id."""
     user = db.query(User).filter(User.email == request.username).first()
     if not user:
@@ -117,9 +131,7 @@ def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
     tags=["Salas"],
     summary="Listar todas las salas",
 )
-def list_rooms(
-    repository: RoomRepositorySQL = Depends(get_room_repository),
-):
+def list_rooms(repository: RoomRepo):
     """Retorna el inventario completo de salas con todos sus atributos."""
     return repository.get_all_rooms()
 
@@ -130,9 +142,7 @@ def list_rooms(
     tags=["Salas"],
     summary="Listar salas disponibles",
 )
-def list_available_rooms(
-    repository: RoomRepositorySQL = Depends(get_room_repository),
-):
+def list_available_rooms(repository: RoomRepo):
     """Retorna solo las salas con estado DISPONIBLE."""
     return repository.get_available_rooms()
 
@@ -149,26 +159,31 @@ def list_available_rooms(
     ),
 )
 def filter_rooms(
-    status: Optional[str] = Query(
-        None,
-        description="DISPONIBLE | ASIGNADA | MANTENIMIENTO",
-    ),
-    has_projector: Optional[bool] = Query(
-        None, description="True si la sala debe tener proyector"
-    ),
-    requires_outlets: Optional[bool] = Query(
-        None, description="True si la sala debe tener enchufes operativos"
-    ),
-    is_accessible: Optional[bool] = Query(
-        None, description="True si la sala debe cumplir accesibilidad universal"
-    ),
-    tags: Optional[str] = Query(
-        None, description="Tag de categoría, e.g. 'computacion'"
-    ),
-    min_capacity: Optional[int] = Query(
-        None, description="Aforo físico mínimo requerido"
-    ),
-    repository: RoomRepositorySQL = Depends(get_room_repository),
+    repository: RoomRepo,
+    status: Annotated[
+        Optional[str],
+        Query(description="DISPONIBLE | ASIGNADA | MANTENIMIENTO"),
+    ] = None,
+    has_projector: Annotated[
+        Optional[bool],
+        Query(description="True si la sala debe tener proyector"),
+    ] = None,
+    requires_outlets: Annotated[
+        Optional[bool],
+        Query(description="True si la sala debe tener enchufes operativos"),
+    ] = None,
+    is_accessible: Annotated[
+        Optional[bool],
+        Query(description="True si la sala debe cumplir accesibilidad universal"),
+    ] = None,
+    tags: Annotated[
+        Optional[str],
+        Query(description="Tag de categoría, e.g. 'computacion'"),
+    ] = None,
+    min_capacity: Annotated[
+        Optional[int],
+        Query(description="Aforo físico mínimo requerido"),
+    ] = None,
 ):
     rooms = repository.get_all_rooms()
     if status is not None:
@@ -193,11 +208,9 @@ def filter_rooms(
     response_model=schemas.RoomResponse,
     tags=["Salas"],
     summary="Obtener sala por ID",
+    responses=RESPONSE_404,
 )
-def get_room(
-    room_id: int,
-    repository: RoomRepositorySQL = Depends(get_room_repository),
-):
+def get_room(room_id: int, repository: RoomRepo):
     """Retorna el detalle completo de una sala específica."""
     try:
         return repository.get_room_by_id(room_id)
@@ -219,7 +232,7 @@ def get_room(
 )
 def create_room_request(
     body: schemas.RoomRequestCreate,
-    repository: RoomRequestRepositorySQL = Depends(get_room_request_repository),
+    repository: RoomRequestRepo,
 ):
     """
     El docente envía los requisitos de su clase (aforo, proyector, enchufes,
@@ -243,10 +256,8 @@ def create_room_request(
     tags=["Solicitudes"],
     summary="Listar solicitudes pendientes (Coordinador)",
 )
-def list_pending_requests(
-    repository: RoomRequestRepositorySQL = Depends(get_room_request_repository),
-):
-    """Retorna todas las solicitudes en estado PENDIENTE para que el coordinador las gestione."""
+def list_pending_requests(repository: RoomRequestRepo):
+    """Retorna las solicitudes PENDIENTE para que el coordinador las gestione."""
     return repository.get_pending_requests()
 
 
@@ -256,10 +267,7 @@ def list_pending_requests(
     tags=["Solicitudes"],
     summary="Solicitudes de un docente",
 )
-def list_requests_by_teacher(
-    teacher_id: int,
-    repository: RoomRequestRepositorySQL = Depends(get_room_request_repository),
-):
+def list_requests_by_teacher(teacher_id: int, repository: RoomRequestRepo):
     """Retorna todas las solicitudes de un docente específico (historial)."""
     return repository.get_requests_by_teacher(teacher_id)
 
@@ -269,11 +277,12 @@ def list_requests_by_teacher(
     response_model=schemas.RoomRequestResponse,
     tags=["Solicitudes"],
     summary="Aprobar o rechazar una solicitud (Coordinador)",
+    responses={**RESPONSE_400, **RESPONSE_404},
 )
 def update_request_status(
     request_id: int,
     body: schemas.RoomRequestStatusUpdate,
-    repository: RoomRequestRepositorySQL = Depends(get_room_request_repository),
+    repository: RoomRequestRepo,
 ):
     """
     El coordinador cambia el estado de una solicitud a APROBADA o RECHAZADA.
@@ -307,7 +316,7 @@ def update_request_status(
 )
 def create_room_suggestions(
     request: schemas.RoomSuggestionRequest,
-    use_case: AssignmentUseCase = Depends(get_assignment_use_case),
+    use_case: AssignmentUC,
 ):
     rooms = use_case.suggest_optimal_rooms(
         time_block_id=request.time_block_id,
@@ -338,10 +347,11 @@ def create_room_suggestions(
     response_model=schemas.AssignmentResponse,
     tags=["Asignaciones"],
     summary="Confirmar asignación de sala (Coordinador)",
+    responses=RESPONSE_400,
 )
 def create_assignment(
     request: schemas.AssignmentRequest,
-    use_case: AssignmentUseCase = Depends(get_assignment_use_case),
+    use_case: AssignmentUC,
 ):
     """El coordinador confirma la asignación de una sala a una sección."""
     try:
@@ -361,9 +371,7 @@ def create_assignment(
     tags=["Asignaciones"],
     summary="Listar asignaciones confirmadas",
 )
-def list_assignments(
-    use_case: DashboardUseCase = Depends(get_dashboard_use_case),
-):
+def list_assignments(use_case: DashboardUC):
     """Retorna el historial de asignaciones con detalle de sala y bloque."""
     return use_case.list_teacher_assignments()
 
@@ -379,9 +387,7 @@ def list_assignments(
     tags=["Bloques Horarios"],
     summary="Listar todos los bloques horarios",
 )
-def list_time_blocks(
-    repository: TimeBlockRepositorySQL = Depends(get_time_block_repository),
-):
+def list_time_blocks(repository: TimeBlockRepo):
     """Retorna todos los bloques horarios disponibles en el sistema."""
     return repository.get_all_blocks()
 
@@ -392,10 +398,7 @@ def list_time_blocks(
     tags=["Bloques Horarios"],
     summary="Bloques horarios libres para una sala",
 )
-def list_available_blocks_for_room(
-    room_id: int,
-    repository: TimeBlockRepositorySQL = Depends(get_time_block_repository),
-):
+def list_available_blocks_for_room(room_id: int, repository: TimeBlockRepo):
     """Retorna los bloques en que una sala específica no está ocupada."""
     return repository.get_available_blocks(room_id)
 
@@ -410,10 +413,8 @@ def list_available_blocks_for_room(
     tags=["Dashboard"],
     summary="Estadísticas generales del sistema",
 )
-def get_statistics(
-    use_case: DashboardUseCase = Depends(get_dashboard_use_case),
-):
-    """Conteos de salas por estado, porcentaje de ocupación y total de asignaciones."""
+def get_statistics(use_case: DashboardUC):
+    """Conteos de salas por estado, ocupación y total de asignaciones."""
     return use_case.get_general_statistics()
 
 
