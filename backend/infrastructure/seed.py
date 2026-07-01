@@ -28,23 +28,23 @@ from infrastructure.database import (  # noqa: E402
 # TEST DATA
 # ──────────────────────────────────────────────
 
-# (code, capacity, status, has_projector, usable_outlets)
+# (code, capacity, status, has_projector, usable_outlets, is_accessible, tags)
 ROOMS = [
-    ("A-101", 20, "DISPONIBLE", True, 0),
-    ("A-102", 25, "DISPONIBLE", False, 4),
-    ("A-103", 30, "MANTENIMIENTO", False, 0),
-    ("A-201", 35, "DISPONIBLE", True, 8),
-    ("A-202", 40, "DISPONIBLE", True, 6),
-    ("A-203", 45, "DISPONIBLE", True, 10),
-    ("B-101", 22, "DISPONIBLE", False, 0),
-    ("B-102", 28, "DISPONIBLE", True, 2),
-    ("B-103", 33, "MANTENIMIENTO", False, 0),
-    ("B-201", 38, "DISPONIBLE", True, 12),
-    ("B-202", 42, "DISPONIBLE", False, 5),
-    ("C-101", 24, "DISPONIBLE", True, 0),
-    ("C-102", 31, "DISPONIBLE", False, 8),
-    ("C-201", 37, "DISPONIBLE", True, 6),
-    ("C-202", 45, "MANTENIMIENTO", True, 4),
+    ("A-101", 20, "DISPONIBLE",    True,  0,  True,  None),
+    ("A-102", 25, "DISPONIBLE",    False, 4,  False, "computacion"),
+    ("A-103", 30, "MANTENIMIENTO", False, 0,  False, None),
+    ("A-201", 35, "DISPONIBLE",    True,  8,  True,  None),
+    ("A-202", 40, "DISPONIBLE",    True,  6,  False, "computacion"),
+    ("A-203", 45, "DISPONIBLE",    True,  10, True,  "computacion"),
+    ("B-101", 22, "DISPONIBLE",    False, 0,  False, None),
+    ("B-102", 28, "DISPONIBLE",    True,  2,  True,  None),
+    ("B-103", 33, "MANTENIMIENTO", False, 0,  False, None),
+    ("B-201", 38, "DISPONIBLE",    True,  12, True,  "computacion"),
+    ("B-202", 42, "DISPONIBLE",    False, 5,  False, None),
+    ("C-101", 24, "DISPONIBLE",    True,  0,  False, None),
+    ("C-102", 31, "DISPONIBLE",    False, 8,  True,  "computacion"),
+    ("C-201", 37, "DISPONIBLE",    True,  6,  False, None),
+    ("C-202", 45, "MANTENIMIENTO", True,  4,  False, None),
 ]
 
 # Monday to Friday, 4 blocks per day (weekday values stay in Spanish).
@@ -93,8 +93,10 @@ def seed_rooms(db):
             status=status,
             has_projector=has_projector,
             usable_outlets=usable_outlets,
+            is_accessible=is_accessible,
+            tags=tags,
         )
-        for code, capacity, status, has_projector, usable_outlets in ROOMS
+        for code, capacity, status, has_projector, usable_outlets, is_accessible, tags in ROOMS
     )
     db.flush()
     print(f"  [OK]   {len(ROOMS)} rooms inserted.")

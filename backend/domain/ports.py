@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from domain.entities import Assignment, Room, TimeBlock, User
+from domain.entities import Assignment, Room, RoomRequest, TimeBlock, User
 
 
 class IRoomRepository(ABC):
@@ -28,6 +28,35 @@ class IRoomRepository(ABC):
         requires_projector: bool,
         requires_outlets: bool,
     ) -> List[Room]:
+        ...
+
+
+class IRoomRequestRepository(ABC):
+    """Output port to manage teacher room requests."""
+
+    @abstractmethod
+    def create_request(
+        self,
+        teacher_id: int,
+        course_name: str,
+        expected_attendance: int,
+        requires_projector: bool,
+        requires_outlets: bool,
+        requires_accessibility: bool,
+        time_block_id: Optional[int],
+    ) -> RoomRequest:
+        ...
+
+    @abstractmethod
+    def get_pending_requests(self) -> List[dict]:
+        ...
+
+    @abstractmethod
+    def get_requests_by_teacher(self, teacher_id: int) -> List[dict]:
+        ...
+
+    @abstractmethod
+    def update_status(self, request_id: int, status: str) -> RoomRequest:
         ...
 
 

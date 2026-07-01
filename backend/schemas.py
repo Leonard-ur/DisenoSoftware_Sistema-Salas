@@ -1,6 +1,7 @@
-from typing import List
+from datetime import time
+from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class RoomSuggestionRequest(BaseModel):
@@ -10,19 +11,29 @@ class RoomSuggestionRequest(BaseModel):
     expected_attendance: int
     requires_projector: bool
     requires_outlets: bool
+    requires_accessibility: bool = False   # BR-08
+    required_tags: Optional[str] = None    # BR-09
 
 
-class AssignmentRequest(BaseModel):
-    """Data needed to confirm an assignment."""
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
-    section_id: int
-    room_id: int
-    time_block_id: int
-    coordinator_id: int
+
+class LoginResponse(BaseModel):
+    token: str
+    role: str
+    name: str
+    user_id: int
+
+
+# ==========================================
+# ROOMS
+# ==========================================
 
 
 class RoomResponse(BaseModel):
-    """Basic representation of a room."""
+    """Full representation of a room."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -32,6 +43,59 @@ class RoomResponse(BaseModel):
     status: str
     has_projector: bool
     usable_outlets: int
+    is_accessible: bool
+    tags: Optional[str]
+
+
+# ==========================================
+# ROOM REQUESTS (solicitudes de docentes)
+# ==========================================
+
+
+class RoomRequestCreate(BaseModel):
+    """Payload that a teacher sends to create a room request."""
+
+    teacher_id: int
+    course_name: str
+    expected_attendance: int
+    requires_projector: bool = False
+    requires_outlets: bool = False
+    requires_accessibility: bool = False
+    time_block_id: Optional[int] = None
+
+
+class RoomRequestStatusUpdate(BaseModel):
+    """Payload that a coordinator sends to approve or reject a request."""
+
+    status: str   # APROBADA | RECHAZADA
+
+
+class RoomRequestResponse(BaseModel):
+    """Full detail of a room request, including teacher and block info."""
+
+    id: int
+    teacher_id: int
+    teacher_name: str
+    course_name: str
+    expected_attendance: int
+    requires_projector: bool
+    requires_outlets: bool
+    requires_accessibility: bool
+    time_block_id: Optional[int]
+    time_block_day: Optional[str]
+    time_block_start: Optional[str]
+    time_block_end: Optional[str]
+    status: str
+    created_at: Optional[str]
+
+
+# kept for backwards compatibility with existing frontend
+RoomRequestSchema = RoomRequestResponse
+
+
+# ==========================================
+# ROOM SUGGESTIONS (motor de búsqueda)
+# ==========================================
 
 
 class RoomSuggestionResponse(BaseModel):
@@ -39,6 +103,20 @@ class RoomSuggestionResponse(BaseModel):
 
     message: str
     suggested_rooms: List[RoomResponse]
+
+
+# ==========================================
+# ASSIGNMENTS
+# ==========================================
+
+
+class AssignmentRequest(BaseModel):
+    """Data needed to confirm an assignment."""
+
+    section_id: int
+    room_id: int
+    time_block_id: int
+    coordinator_id: int
 
 
 class AssignmentResponse(BaseModel):
@@ -67,6 +145,11 @@ class AssignmentDetailResponse(BaseModel):
     created_at: str
 
 
+# ==========================================
+# TIME BLOCKS
+# ==========================================
+
+
 class TimeBlockResponse(BaseModel):
     """Representation of a time block."""
 
@@ -76,3 +159,11 @@ class TimeBlockResponse(BaseModel):
     weekday: str
     start_time: str
     end_time: str
+
+    @field_validator("start_time", "end_time", mode="before")
+    @classmethod
+    def _format_time(cls, value):
+        """Render datetime.time values as short HH:MM strings."""
+        if isinstance(value, time):
+            return value.strftime("%H:%M")
+        return value

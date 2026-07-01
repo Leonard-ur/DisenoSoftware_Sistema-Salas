@@ -1,0 +1,24 @@
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+        <h2 class="text-2xl font-semibold text-zinc-100">Inventario de Aulas</h2>
+        <p class="text-zinc-400 text-sm mt-1">Estado en tiempo real de los espacios del campus.</p>
+    </div>
+
+    <div class="flex gap-2 flex-wrap bg-zinc-900 p-1 rounded-lg border border-zinc-800" id="filtros-sala">
+        <button data-filtro="TODOS"
+            class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-md bg-zinc-800 text-zinc-100 shadow-sm transition-colors">Todas</button>
+        <button data-filtro="DISPONIBLE"
+            class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition-colors">Disponibles</button>
+        <button data-filtro="ASIGNADA"
+            class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition-colors">Asignadas</button>
+        <button data-filtro="MANTENIMIENTO"
+            class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-md text-zinc-400 hover:text-zinc-200 transition-colors">Mantención</button>
+    </div>
+</div>
+
+<div id="contenedor-salas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="col-span-full text-center py-12 text-zinc-600 bg-zinc-900 border border-zinc-800 rounded-xl">
+        <i data-lucide="loader-2" class="animate-spin w-8 h-8 mx-auto mb-3 text-zinc-700"></i>
+        <p class="text-sm">Cargando inventario...</p>
+    </div>
+</div>

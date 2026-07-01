@@ -1,0 +1,45 @@
+<div class="mb-6">
+    <h2 class="text-2xl font-semibold text-zinc-100">Resumen del Campus</h2>
+    <p class="text-zinc-400 mt-1 text-sm">Estado actual del campus para hoy.</p>
+</div>
+
+<!-- FIX: Se añadieron IDs (stat-total, stat-disponibles, stat-asignadas, stat-mantenimiento)
+     para que cargarPanelCoordinador() pueda actualizar estos valores desde la API -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-3">
+        <div class="flex items-center gap-2 text-zinc-400">
+            <i data-lucide="building-2" class="w-4 h-4"></i>
+            <p class="text-sm font-medium">Salas Totales</p>
+        </div>
+        <p id="stat-total" class="text-3xl font-semibold text-zinc-100">
+            <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+        </p>
+    </div>
+    <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-3">
+        <div class="flex items-center gap-2 text-emerald-400">
+            <i data-lucide="circle-check" class="w-4 h-4"></i>
+            <p class="text-sm font-medium">Disponibles</p>
+        </div>
+        <p id="stat-disponibles" class="text-3xl font-semibold text-emerald-400">
+            <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+        </p>
+    </div>
+    <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-3">
+        <div class="flex items-center gap-2 text-yellow-400">
+            <i data-lucide="calendar-check" class="w-4 h-4"></i>
+            <p class="text-sm font-medium">Asignaciones Activas</p>
+        </div>
+        <p id="stat-asignadas" class="text-3xl font-semibold text-zinc-100">
+            <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+        </p>
+    </div>
+    <div class="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col gap-3">
+        <div class="flex items-center gap-2 text-rose-400">
+            <i data-lucide="wrench" class="w-4 h-4"></i>
+            <p class="text-sm font-medium">En Mantención</p>
+        </div>
+        <p id="stat-mantenimiento" class="text-3xl font-semibold text-rose-400">
+            <i data-lucide="loader-2" class="animate-spin text-zinc-600 w-6 h-6"></i>
+        </p>
+    </div>
+</div>

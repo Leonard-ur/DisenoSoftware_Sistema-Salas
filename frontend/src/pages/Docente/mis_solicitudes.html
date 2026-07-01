@@ -1,0 +1,20 @@
+<!-- Parcial: lista de solicitudes del docente -->
+<!-- Cargado por el router cuando se hace click en "Mis Solicitudes" -->
+<!-- Después de cargar, el router ejecuta cargarMisSolicitudes() -->
+
+<div class="space-y-6">
+
+    <div>
+        <h2 class="text-2xl font-semibold text-zinc-100">Mis Solicitudes</h2>
+        <p class="text-zinc-400 text-sm mt-1">Historial de asignaciones de sala confirmadas para tu cuenta.</p>
+    </div>
+
+    <!-- contenedor-solicitudes es llenado dinámicamente por cargarMisSolicitudes() -->
+    <div id="contenedor-solicitudes">
+        <div class="flex justify-center items-center h-40 text-zinc-500">
+            <i data-lucide="loader-2" class="animate-spin w-6 h-6 mr-2"></i>
+            <span class="text-sm">Cargando solicitudes...</span>
+        </div>
+    </div>
+
+</div>
